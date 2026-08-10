@@ -144,13 +144,13 @@ function card(r){
           <span class="tag brand">${esc(r.status)}</span></div>
         <div class="m">${esc(r.contact_email || 'no email')} ·
           ${marks} mark${marks===1?'':'s'} ·
-          ${(pf.companies||[]).length} companies ·
-          ${(d.users||[]).length} users${
+          ${(pf.companies||[]).length} compan${(pf.companies||[]).length===1?'y':'ies'} ·
+          ${(d.users||[]).length} user${(d.users||[]).length===1?'':'s'}${
             (w.applicants||[]).length || (w.companies||[]).length
               ? ` · watchlist ${wMarks} marks, ${(w.companies||[]).length} companies` : ''}</div>
       </div>
       <div class="m" style="text-align:right;white-space:nowrap">${date(r.created_at)}<br>
-        <code>v${r.version} of ${r.versions}</code></div>
+        <code>version ${r.version} · ${r.versions} saved</code></div>
     </div>
     <div class="body">
       ${auth ? `<h3>Authority</h3>
@@ -211,7 +211,7 @@ function card(r){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 10 Aug 21:56';
+window.BUILD = 'build 10 Aug 21:59';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
