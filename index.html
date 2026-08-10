@@ -179,10 +179,35 @@ const $  = s => document.querySelector(s);
 const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
   ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
 
+/* What the registers said at the moment of the claim. Kept because a portfolio
+   claim can be disputed later, and "the register showed this on this date" is
+   the only defensible answer. Trimmed to identifiers and counts — the full
+   payloads would bloat every save without adding evidential value. */
+const EVIDENCE = [];
+function note(path, d){
+  const at = new Date().toISOString();
+  const size = o => Array.isArray(o) ? o.length : undefined;
+  EVIDENCE.push({
+    at, endpoint: path,
+    results: size(d?.results) ?? size(d?.trademarks) ?? size(d?.current),
+    keys: (d?.results || []).slice(0, 25).map(x =>
+            x.ipo_identifier ?? x.company_number ?? x.application_number ?? x.officer_id)
+          .filter(Boolean),
+    applicant: d?.applicant ? { ipo_identifier: d.applicant.ipo_identifier,
+                                name: d.applicant.name,
+                                company_number: d.applicant.company_number } : undefined,
+    trademarks: (d?.trademarks || []).map(t => t.application_number),
+    error: d?.error,
+  });
+  if (EVIDENCE.length > 200) EVIDENCE.splice(0, EVIDENCE.length - 200);
+}
+
 async function api(path){
   const r = await fetch(API + path);
   if (!r.ok) throw new Error('lookup failed');
-  return r.json();
+  const d = await r.json();
+  note(path, d);
+  return d;
 }
 
 /* ── persistence: every step is saved before moving on ─────────────── */
@@ -219,6 +244,7 @@ function snapshot(){
                             relationship:c.relationship})),
     },
     users: S.users,
+    lookup_evidence: EVIDENCE,
   };
 }
 
@@ -766,7 +792,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 10 Aug 21:35';
+window.BUILD = 'build 10 Aug 21:55';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
