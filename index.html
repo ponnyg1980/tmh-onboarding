@@ -125,6 +125,7 @@
   <header>
     <h1>Set up your portfolio</h1>
     <span class="sub">The Trademark Helpline</span>
+    <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
   </header>
   <div class="steps" id="progress"></div>
   <div id="stage"></div>
@@ -687,6 +688,11 @@ $('#next').onclick = async () => {
   at++; render();
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
+
+/* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
+   old behaviour" is usually a stale copy — this says which one is loaded. */
+window.BUILD = 'build 10 Aug 21:15';
+if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
 </script>
