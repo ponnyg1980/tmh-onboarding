@@ -337,16 +337,23 @@ function viewCompanies(mode){
     <p class="hint">Searching by name finds every company where you're listed as an officer.</p>
     <div id="coResults"></div>
     ${list.length ? `<h3>${W?'Watching':'In your portfolio'}</h3>` : ''}
-    <div class="rows" id="coChosen">
+    <div id="coChosen">
       ${list.map((c,i)=>`
-        <div class="row">
-          <input type="checkbox" ${c.include?'checked':''} data-co="${i}" ${W?'data-w="1"':''}>
-          <div class="main">
-            <div class="t">${esc(c.company_name)}
-              <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span></div>
-            <div class="m">${esc(c.company_number)}${c.postcode?' · '+esc(c.postcode):''}</div>
+        <div class="group">
+          <div class="row" style="border-bottom:0">
+            <input type="checkbox" ${c.include?'checked':''} data-co="${i}" ${W?'data-w="1"':''}>
+            <div class="main">
+              <div class="t">${esc(c.company_name)}
+                <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span></div>
+              <div class="m">${esc(c.company_number)}${c.postcode?' · '+esc(c.postcode):''}</div>
+            </div>
+            <div class="act" style="display:flex;gap:8px;align-items:center">
+              ${W?relSelect(c.relationship, `data-rel-co="${i}"`):''}
+              <button class="ghost" data-officers="${esc(c.company_number)}"
+                      ${W?'data-w="1"':''}>People</button>
+            </div>
           </div>
-          ${W?`<div class="act">${relSelect(c.relationship, `data-rel-co="${i}"`)}</div>`:''}
+          <div data-officers-panel="${esc(c.company_number)}"></div>
         </div>`).join('')}
     </div>
     ${!list.length ? `<div class="empty">Nothing added yet. Search above to begin.</div>` : ''}
@@ -540,6 +547,56 @@ function bindChosen(W){
     b.disabled = true; b.textContent = 'Adding…';
     await addApplicant(b.dataset.addSimilar, W); render();
   });
+  $('#stage').querySelectorAll('[data-officers]').forEach(b => b.onclick = () =>
+    showOfficers(b.dataset.officers, W, false));
+}
+
+/* ── officers of a company you have already added ──────────────────────
+   Most people cannot pick themselves out of a list of namesakes, but they can
+   always find themselves in the officer list of their own company. From there
+   we already know exactly who they are, so their other companies follow. */
+async function showOfficers(number, W, all){
+  const panel = $(`[data-officers-panel="${number}"]`);
+  if (!panel) return;
+  if (panel.dataset.open === '1' && !all){ panel.dataset.open=''; panel.innerHTML=''; return; }
+  panel.dataset.open = '1';
+  panel.innerHTML = `<div class="none"><span class="spin"></span> Looking up officers…</div>`;
+
+  let d;
+  try { d = await api(`/api/company/${number}/officers${all?'?scope=all':''}`); }
+  catch(e){ panel.innerHTML = `<div class="err">Could not reach Companies House.</div>`; return; }
+  if (d.error){ panel.innerHTML = `<div class="err">${esc(d.error)}</div>`; return; }
+
+  const rows = [...(d.current||[]), ...(d.former||[])];
+  if (!rows.length){ panel.innerHTML = `<div class="none">No officers on record.</div>`; return; }
+
+  panel.innerHTML = `
+    <div class="rows" style="border:0;border-radius:0;border-top:1px solid var(--line)">
+      ${rows.map(o=>`
+        <div class="row pick" data-officer-pick="${esc(o.officer_id)}">
+          <div class="main">
+            <div class="t">${esc(o.name)}
+              ${o.resigned_on?'<span class="tag warn">former</span>':''}</div>
+            <div class="m">${esc(o.officer_role||'')}${
+              o.appointment_count!=null
+                ? ' · '+o.appointment_count+' appointment'+(o.appointment_count===1?'':'s')
+                : ''}${o.appointed_on?' · since '+esc(o.appointed_on):''}</div>
+          </div>
+          <div class="act"><button class="ghost">See companies</button></div>
+        </div>`).join('')}
+    </div>
+    ${!all && d.former_count ? `<div style="padding:10px 14px"><button class="link" `
+      + `data-officers-all="${esc(number)}">Show ${d.former_count} former `
+      + `officer${d.former_count===1?'':'s'}</button></div>` : ''}`;
+
+  panel.querySelectorAll('[data-officers-all]').forEach(b => b.onclick = () =>
+    showOfficers(number, W, true));
+  panel.querySelectorAll('[data-officer-pick]').forEach(row => row.onclick = async () => {
+    row.style.opacity = .5;
+    const d2 = await api(`/api/officer/${row.dataset.officerPick}/companies`);
+    panel.innerHTML = officerCompaniesHtml(d2);
+    wireOfficerCompanies(panel, W);
+  });
 }
 
 function renderTmResults(d, mode, W){
@@ -632,6 +689,51 @@ function renderOfficerResults(r){
       before selecting. You can pick more than one if you appear more than once.</p>`;
 }
 
+/* A role they still hold, at a company still trading. Everything else is shown
+   but left unticked — a serial director should not have to clear out twenty
+   dissolved companies to add the two that matter. */
+const autoTick = c => c.is_current && c.company_status === 'active';
+
+function officerCompaniesHtml(d){
+  const r = d.results || [];
+  if (!r.length) return `<div class="none">No appointments found for this person.</div>`;
+  const on = r.filter(autoTick).length;
+  return `<div class="group">
+      <div class="head">
+        <div><div class="t">${esc(d.officer_name||'')}</div>
+          <div class="m">${r.length} appointment${r.length===1?'':'s'} — ${on} selected${
+            r.length>on ? `, ${r.length-on} left unticked (resigned or dissolved)` : ''}</div></div>
+      </div>
+      <div class="rows" style="border:0;border-radius:0">
+        ${r.map(c=>`
+          <div class="row">
+            <input type="checkbox" ${autoTick(c)?'checked':''} data-oc='${esc(JSON.stringify(c))}'>
+            <div class="main">
+              <div class="t">${esc(c.company_name)}
+                <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span>
+                ${c.is_current?'':'<span class="tag warn">resigned</span>'}</div>
+              <div class="m">${esc(c.company_number)} · ${esc(c.officer_role||'')}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button class="ghost" data-add-officer-cos="1">Add selected companies</button>`;
+}
+
+function wireOfficerCompanies(root, W){
+  const btn = root.querySelector('[data-add-officer-cos]');
+  if (!btn) return;
+  btn.onclick = () => {
+    const list = W ? S.watch.companies : S.companies;
+    root.querySelectorAll('[data-oc]:checked').forEach(cb => {
+      const c = JSON.parse(cb.dataset.oc);
+      if (!list.some(x=>x.company_number===c.company_number))
+        list.push({...c, include:true, relationship: W?'competitor':undefined});
+    });
+    render();
+  };
+}
+
 function wireCoResults(W){
   $('#stage').querySelectorAll('[data-pick-co]').forEach(row => row.onclick = () => {
     const c = JSON.parse(row.dataset.pickCo);
@@ -643,35 +745,8 @@ function wireCoResults(W){
   $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async () => {
     row.style.opacity = .5;
     const d = await api(`/api/officer/${row.dataset.pickOfficer}/companies`);
-    $('#coResults').innerHTML = `
-      <div class="group">
-        <div class="head">
-          <div><div class="t">${esc(d.officer_name||'')}</div>
-            <div class="m">${(d.results||[]).length} appointments — all selected</div></div>
-        </div>
-        <div class="rows" style="border:0;border-radius:0">
-          ${(d.results||[]).map(c=>`
-            <div class="row">
-              <input type="checkbox" checked data-oc='${esc(JSON.stringify(c))}'>
-              <div class="main">
-                <div class="t">${esc(c.company_name)}
-                  <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status)}</span>
-                  ${c.is_current?'':'<span class="tag warn">resigned</span>'}</div>
-                <div class="m">${esc(c.company_number)} · ${esc(c.officer_role||'')}</div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-      <button class="ghost" id="addOfficerCos">Add selected companies</button>`;
-    $('#addOfficerCos').onclick = () => {
-      const list = W ? S.watch.companies : S.companies;
-      $('#coResults').querySelectorAll('[data-oc]:checked').forEach(cb => {
-        const c = JSON.parse(cb.dataset.oc);
-        if (!list.some(x=>x.company_number===c.company_number))
-          list.push({...c, include:true, relationship: W?'competitor':undefined});
-      });
-      render();
-    };
+    $('#coResults').innerHTML = officerCompaniesHtml(d);
+    wireOfficerCompanies($('#coResults'), W);
   });
 }
 
@@ -691,7 +766,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 10 Aug 21:15';
+window.BUILD = 'build 10 Aug 21:33';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
