@@ -237,9 +237,9 @@ function viewRouter(){
     <h2>First, which of these apply to you?</h2>
     <p class="lead">We'll only ask about the things you say yes to.</p>
     ${yn('trademarks','Do you have registered trademarks?',
-         'We\\'ll find them on the UK IPO register — you won\\'t need to type any numbers.')}
+         'We\'ll find them on the UK IPO register — you won\'t need to type any numbers.')}
     ${yn('companies','Do you have registered companies?',
-         'We\\'ll find them at Companies House and link them to your portfolio.')}
+         'We\'ll find them at Companies House and link them to your portfolio.')}
     ${yn('watchlist','Would you like to be alerted about activity on other businesses?',
          'Competitors, suppliers, prospects or clients — trademark filings and company changes.')}
   </div>`;
@@ -253,7 +253,7 @@ function viewTrademarks(mode){
     <h2>${W ? 'Trademarks to watch' : 'Your trademarks'}</h2>
     <p class="lead">${W
       ? 'Search for a brand or business whose trademarks you want to follow.'
-      : 'Search by trademark name or by the name it\\'s registered under. We\\'ll pull in everything that applicant owns.'}</p>
+      : 'Search by trademark name or by the name it\'s registered under. We\'ll pull in everything that applicant owns.'}</p>
     <div class="searchbar">
       <select id="tmMode">
         <option value="trademark">Trademark name</option>
@@ -324,7 +324,7 @@ function viewCompanies(mode){
     <h2>${W ? 'Companies to watch' : 'Your companies'}</h2>
     <p class="lead">${W
       ? 'Search for companies you want to follow.'
-      : 'Search by company name, or find every company you\\'re a director of by searching your own name.'}</p>
+      : 'Search by company name, or find every company you\'re a director of by searching your own name.'}</p>
     <div class="searchbar">
       <select id="coMode">
         <option value="company">Company name</option>
