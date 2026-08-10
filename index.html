@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up your portfolio — The Trademark Helpline</title>
+<style>
+  :root{
+    --ink:#14161a; --muted:#6b7280; --line:#e4e6ea; --bg:#f7f8fa; --card:#fff;
+    --brand:#c81b5b; --brand-dark:#a5164b; --brand-tint:#fdeef4;
+    --ok:#0f7b4f; --ok-tint:#e8f5ee; --warn:#8a5a00; --warn-tint:#fdf3e0;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}
+  header h1{font-size:21px;margin:0;letter-spacing:-.01em}
+  header .sub{color:var(--muted);font-size:13px}
+
+  /* progress */
+  .steps{display:flex;gap:6px;margin-bottom:26px;flex-wrap:wrap}
+  .steps div{flex:1;min-width:60px;height:3px;border-radius:2px;background:var(--line)}
+  .steps div.done{background:var(--brand)}
+  .steps div.now{background:var(--brand);opacity:.45}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:24px;margin-bottom:16px}
+  h2{font-size:18px;margin:0 0 6px;letter-spacing:-.01em}
+  .lead{color:var(--muted);margin:0 0 20px;font-size:14px}
+  h3{font-size:14px;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+
+  /* choices */
+  .choice{display:flex;gap:10px;margin:10px 0 18px}
+  .choice button{flex:1;padding:14px;border:1px solid var(--line);background:#fff;
+    border-radius:var(--r);font:inherit;cursor:pointer;text-align:left}
+  .choice button:hover{border-color:var(--brand)}
+  .choice button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);
+    box-shadow:inset 0 0 0 1px var(--brand)}
+  .choice .q{font-weight:600;display:block}
+  .choice .h{color:var(--muted);font-size:13px}
+
+  .ask{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .ask p{margin:0 0 4px;font-weight:600}
+  .ask .h{color:var(--muted);font-size:13px;margin-bottom:12px}
+
+  /* search */
+  .searchbar{display:flex;gap:8px;margin-bottom:6px}
+  .searchbar select,.searchbar input,.searchbar button{
+    font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .searchbar input{flex:1;min-width:0}
+  .searchbar input:focus,.searchbar select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .searchbar button{background:var(--brand);color:#fff;border-color:var(--brand);
+    cursor:pointer;font-weight:600;padding-inline:20px}
+  .searchbar button:disabled{opacity:.5;cursor:default}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+
+  /* rows */
+  .rows{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+  .row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line);
+       background:#fff}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:#fcfcfd}
+  .row input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--brand);flex:none}
+  .row .main{flex:1;min-width:0}
+  .row .t{font-weight:600}
+  .row .m{color:var(--muted);font-size:13px;margin-top:1px}
+  .row .act{flex:none}
+  .row.pick{cursor:pointer}
+
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;
+       border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:1px}
+  .tag.ok{background:var(--ok-tint);color:var(--ok);border-color:transparent}
+  .tag.warn{background:var(--warn-tint);color:var(--warn);border-color:transparent}
+  .tag.brand{background:var(--brand-tint);color:var(--brand-dark);border-color:transparent}
+
+  .group{border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+  .group>.head{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       padding:13px 14px;background:#fbfbfc;border-bottom:1px solid var(--line)}
+  .group>.head .t{font-weight:600}
+  .group>.head .m{color:var(--muted);font-size:13px}
+
+  button.link{background:none;border:0;color:var(--brand);font:inherit;cursor:pointer;
+       padding:0;text-decoration:underline}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:8px;
+       padding:7px 12px;font:inherit;cursor:pointer;font-size:13px}
+  button.ghost:hover{border-color:var(--brand);color:var(--brand-dark)}
+
+  /* users */
+  .user{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+  .user .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .grid input{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px}
+  .grid input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .perms{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .perms label{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;
+       border:1px solid var(--line);border-radius:99px;cursor:pointer}
+  .perms input{accent-color:var(--brand)}
+  .perms label:has(input:checked){border-color:var(--brand);background:var(--brand-tint)}
+
+  /* nav */
+  .nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}
+  .nav .right{display:flex;gap:10px;align-items:center}
+  .primary{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:12px 26px;
+       font:inherit;font-weight:600;cursor:pointer}
+  .primary:disabled{opacity:.45;cursor:default}
+  .secondary{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 20px;
+       font:inherit;cursor:pointer}
+  .saved{color:var(--ok);font-size:13px}
+
+  .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);
+       border-radius:var(--r);font-size:14px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+       border-top-color:var(--brand);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+  .none{padding:18px;color:var(--muted);font-size:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}.choice{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Set up your portfolio</h1>
+    <span class="sub">The Trademark Helpline</span>
+  </header>
+  <div class="steps" id="progress"></div>
+  <div id="stage"></div>
+  <div class="nav">
+    <button class="secondary" id="back">Back</button>
+    <div class="right">
+      <span class="saved" id="saved"></span>
+      <button class="primary" id="next">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WATCH_TYPES = [
+  ['competitor','Competitor'], ['supplier','Supplier'],
+  ['prospect','Prospect'],     ['client','Client'],
+];
+
+const S = {
+  submissionId: null,
+  version: 0,
+  router: { trademarks:null, companies:null, watchlist:null },
+  applicants: [],      // {ipo,name,kind,postcode,marks:[{...,include}],companies:[]}
+  companies: [],       // {company_number,company_name,...,include}
+  users: [ blankUser(true) ],
+  watch: { applicants:[], companies:[] },   // each carries .relationship
+};
+
+function blankUser(primary){
+  return { primary, first:'', last:'', position:'', email:'', mobile:'',
+           perms:{ read:true, request:false, authorise:false, pay:false } };
+}
+
+const steps = () => {
+  const out = [{id:'router', label:'About you'}];
+  if (S.router.trademarks) out.push({id:'trademarks', label:'Trademarks'});
+  if (S.router.companies)  out.push({id:'companies',  label:'Companies'});
+  out.push({id:'users', label:'Users'});
+  if (S.router.watchlist)  out.push({id:'watch', label:'Watchlist'});
+  out.push({id:'review', label:'Review'});
+  return out;
+};
+let at = 0;
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $  = s => document.querySelector(s);
+
+/* Supabase refuses to render HTML from *.supabase.co, so the page is served
+   from a static host and the lookups run cross-origin against the function.
+   Served locally by server.py, everything is same-origin instead. */
+const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+
+async function api(path){
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error('lookup failed');
+  return r.json();
+}
+
+/* ── persistence: every step is saved before moving on ─────────────── */
+async function save(){
+  S.version += 1;
+  const body = { submission_id:S.submissionId, version:S.version, state:snapshot() };
+  try{
+    const r = await fetch(API + '/api/submission', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    const d = await r.json();
+    S.submissionId = S.submissionId || d.submission_id;
+    $('#saved').textContent = 'Saved';
+    setTimeout(()=>{ $('#saved').textContent=''; }, 1800);
+  }catch(e){ $('#saved').textContent=''; }
+}
+function snapshot(){
+  return {
+    router: S.router,
+    portfolio: {
+      applicants: S.applicants.map(a => ({
+        ipo_identifier:a.ipo, name:a.name,
+        trademarks: a.marks.filter(m=>m.include).map(m=>m.application_number),
+        excluded:   a.marks.filter(m=>!m.include).map(m=>m.application_number),
+      })),
+      companies: S.companies.filter(c=>c.include)
+                  .map(c=>({company_number:c.company_number, company_name:c.company_name})),
+    },
+    watchlist: {
+      applicants: S.watch.applicants.map(a=>({
+        ipo_identifier:a.ipo, name:a.name, relationship:a.relationship,
+        trademarks:a.marks.filter(m=>m.include).map(m=>m.application_number) })),
+      companies: S.watch.companies.filter(c=>c.include)
+                  .map(c=>({company_number:c.company_number, company_name:c.company_name,
+                            relationship:c.relationship})),
+    },
+    users: S.users,
+  };
+}
+
+/* ── step 1: router ────────────────────────────────────────────────── */
+function viewRouter(){
+  const yn = (key, q, hint) => `
+    <div class="ask">
+      <p>${q}</p><div class="h">${hint}</div>
+      <div class="choice">
+        <button data-k="${key}" data-v="1" aria-pressed="${S.router[key]===true}">
+          <span class="q">Yes</span></button>
+        <button data-k="${key}" data-v="0" aria-pressed="${S.router[key]===false}">
+          <span class="q">No</span></button>
+      </div>
+    </div>`;
+  return `<div class="card">
+    <h2>First, which of these apply to you?</h2>
+    <p class="lead">We'll only ask about the things you say yes to.</p>
+    ${yn('trademarks','Do you have registered trademarks?',
+         'We\\'ll find them on the UK IPO register — you won\\'t need to type any numbers.')}
+    ${yn('companies','Do you have registered companies?',
+         'We\\'ll find them at Companies House and link them to your portfolio.')}
+    ${yn('watchlist','Would you like to be alerted about activity on other businesses?',
+         'Competitors, suppliers, prospects or clients — trademark filings and company changes.')}
+  </div>`;
+}
+
+/* ── step 2: trademarks ────────────────────────────────────────────── */
+function viewTrademarks(mode){
+  const W = mode === 'watch';
+  const list = W ? S.watch.applicants : S.applicants;
+  return `<div class="card">
+    <h2>${W ? 'Trademarks to watch' : 'Your trademarks'}</h2>
+    <p class="lead">${W
+      ? 'Search for a brand or business whose trademarks you want to follow.'
+      : 'Search by trademark name or by the name it\\'s registered under. We\\'ll pull in everything that applicant owns.'}</p>
+    <div class="searchbar">
+      <select id="tmMode">
+        <option value="trademark">Trademark name</option>
+        <option value="applicant">Applicant name</option>
+      </select>
+      <input id="tmQ" placeholder="e.g. your brand name" autocomplete="off">
+      <button id="tmGo">Search</button>
+    </div>
+    <p class="hint">Not sure? Search the brand name as it appears on the register.</p>
+    <div id="tmResults"></div>
+    ${list.length ? `<h3>${W?'Watching':'In your portfolio'}</h3>` : ''}
+    <div id="tmChosen">${list.map((a,i)=>applicantCard(a,i,W)).join('')}</div>
+    ${!list.length ? `<div class="empty">Nothing added yet. Search above to begin.</div>` : ''}
+  </div>`;
+}
+
+function applicantCard(a, i, W){
+  const on = a.marks.filter(m=>m.include).length;
+  return `<div class="group">
+    <div class="head">
+      <div>
+        <div class="t">${esc(a.name)}</div>
+        <div class="m">Applicant ${a.ipo}${a.postcode?' · '+esc(a.postcode):''} ·
+          ${on} of ${a.marks.length} selected</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${W ? relSelect(a.relationship, `data-rel-app="${i}"`) : ''}
+        <button class="ghost" data-drop-app="${i}" ${W?'data-w="1"':''}>Remove</button>
+      </div>
+    </div>
+    ${a.similar && a.similar.length ? a.similar.map(s=>`
+      <div class="row" style="background:var(--warn-tint)">
+        <div class="main">
+          <div class="t">${esc(s.name)} <span class="tag warn">${esc(s.confidence)}</span></div>
+          <div class="m">Applicant ${s.ipo_identifier} · ${s.trademark_count} trademarks${
+            s.postcode?' · '+esc(s.postcode):''}</div>
+          <div class="m">This looks like the same business under a second record. Add it too?</div>
+        </div>
+        <div class="act">
+          <button class="ghost" data-add-similar="${s.ipo_identifier}" ${W?'data-w="1"':''}>Add</button>
+        </div>
+      </div>`).join('') : ''}
+    <div class="rows" style="border:0;border-radius:0">
+      ${a.marks.map((m,j)=>`
+        <div class="row">
+          <input type="checkbox" ${m.include?'checked':''}
+                 data-mark="${i}:${j}" ${W?'data-w="1"':''}>
+          <div class="main">
+            <div class="t">${esc(m.mark_text || m.application_number)}
+              <span class="tag">${esc(m.status||'')}</span></div>
+            <div class="m">${esc(m.application_number)}${
+              m.mark_type?' · '+esc(m.mark_type):''}${m.expiry?' · renews '+esc(m.expiry):''}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+const relSelect = (val, attr) => `<select ${attr}>` +
+  WATCH_TYPES.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('') +
+  `</select>`;
+
+/* ── step 3: companies ─────────────────────────────────────────────── */
+function viewCompanies(mode){
+  const W = mode === 'watch';
+  const list = W ? S.watch.companies : S.companies;
+  return `<div class="card">
+    <h2>${W ? 'Companies to watch' : 'Your companies'}</h2>
+    <p class="lead">${W
+      ? 'Search for companies you want to follow.'
+      : 'Search by company name, or find every company you\\'re a director of by searching your own name.'}</p>
+    <div class="searchbar">
+      <select id="coMode">
+        <option value="company">Company name</option>
+        <option value="officer">My name (find all my companies)</option>
+      </select>
+      <input id="coQ" placeholder="e.g. your company name" autocomplete="off">
+      <button id="coGo">Search</button>
+    </div>
+    <p class="hint">Searching by name finds every company where you're listed as an officer.</p>
+    <div id="coResults"></div>
+    ${list.length ? `<h3>${W?'Watching':'In your portfolio'}</h3>` : ''}
+    <div class="rows" id="coChosen">
+      ${list.map((c,i)=>`
+        <div class="row">
+          <input type="checkbox" ${c.include?'checked':''} data-co="${i}" ${W?'data-w="1"':''}>
+          <div class="main">
+            <div class="t">${esc(c.company_name)}
+              <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span></div>
+            <div class="m">${esc(c.company_number)}${c.postcode?' · '+esc(c.postcode):''}</div>
+          </div>
+          ${W?`<div class="act">${relSelect(c.relationship, `data-rel-co="${i}"`)}</div>`:''}
+        </div>`).join('')}
+    </div>
+    ${!list.length ? `<div class="empty">Nothing added yet. Search above to begin.</div>` : ''}
+  </div>`;
+}
+
+/* ── step 4: users ─────────────────────────────────────────────────── */
+function viewUsers(){
+  return `<div class="card">
+    <h2>Who should have access?</h2>
+    <p class="lead">You're the primary user. Add colleagues or an adviser if someone else
+      manages your trademarks.</p>
+    ${S.users.map((u,i)=>`
+      <div class="user">
+        <div class="hd">
+          <strong>${u.primary?'Primary user':'User '+(i+1)}</strong>
+          ${u.primary?'':`<button class="link" data-drop-user="${i}">Remove</button>`}
+        </div>
+        <div class="grid">
+          <div><label>First name</label><input data-u="${i}:first" value="${esc(u.first)}"></div>
+          <div><label>Last name</label><input data-u="${i}:last" value="${esc(u.last)}"></div>
+          <div><label>Position</label><input data-u="${i}:position" value="${esc(u.position)}"></div>
+          <div><label>Email</label><input data-u="${i}:email" type="email" value="${esc(u.email)}"></div>
+          <div><label>Mobile${u.primary?'':' (optional)'}</label>
+               <input data-u="${i}:mobile" value="${esc(u.mobile)}"></div>
+        </div>
+        <div class="perms">
+          ${[['read','Read only'],['request','Request changes'],
+             ['authorise','Authorise changes'],['pay','Make payments']]
+            .map(([k,l])=>`<label><input type="checkbox" data-p="${i}:${k}"
+              ${u.perms[k]?'checked':''}> ${l}</label>`).join('')}
+        </div>
+      </div>`).join('')}
+    <button class="ghost" id="addUser">Add another user</button>
+  </div>`;
+}
+
+/* ── step 6: review ────────────────────────────────────────────────── */
+function viewReview(){
+  const marks = S.applicants.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
+  const cos   = S.companies.filter(c=>c.include).length;
+  const wm    = S.watch.applicants.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
+  const wc    = S.watch.companies.filter(c=>c.include).length;
+  const line = (l,v) => `<div class="row"><div class="main"><div class="t">${l}</div></div>
+      <div class="act"><strong>${v}</strong></div></div>`;
+  return `<div class="card">
+    <h2>Check this over</h2>
+    <p class="lead">This is what we'll set up. You can change any of it later in the portal.</p>
+    <div class="rows">
+      ${line('Trademarks in your portfolio', marks)}
+      ${line('Companies in your portfolio', cos)}
+      ${S.router.watchlist ? line('Trademarks on your watchlist', wm) : ''}
+      ${S.router.watchlist ? line('Companies on your watchlist', wc) : ''}
+      ${line('People with access', S.users.length)}
+    </div>
+    <h3>Excluded</h3>
+    <p class="hint">Anything you unticked stays out of your portfolio. You can add it later.</p>
+  </div>`;
+}
+
+/* ── rendering ─────────────────────────────────────────────────────── */
+function render(){
+  const st = steps();
+  at = Math.min(at, st.length-1);
+  $('#progress').innerHTML = st.map((s,i)=>
+    `<div class="${i<at?'done':i===at?'now':''}" title="${s.label}"></div>`).join('');
+  const id = st[at].id;
+  const html = {
+    router:      viewRouter,
+    trademarks:  ()=>viewTrademarks('own'),
+    companies:   ()=>viewCompanies('own'),
+    users:       viewUsers,
+    watch:       viewWatch,
+    review:      viewReview,
+  }[id]();
+  $('#stage').innerHTML = html;
+  $('#back').style.visibility = at ? 'visible' : 'hidden';
+  $('#next').textContent = id==='review' ? 'Create my portfolio' : 'Continue';
+  $('#next').disabled = !valid(id);
+  wire(id);
+}
+
+let watchTab = 'trademarks';
+function viewWatch(){
+  return `<div class="card" style="padding-bottom:6px">
+      <h2>Your watchlist</h2>
+      <p class="lead">Follow other businesses — you'll be alerted to trademark filings and
+        company changes. Tell us how each one relates to you.</p>
+      <div class="choice" style="margin-bottom:0">
+        <button data-tab="trademarks" aria-pressed="${watchTab==='trademarks'}">
+          <span class="q">Trademarks</span><span class="h">Follow a brand</span></button>
+        <button data-tab="companies" aria-pressed="${watchTab==='companies'}">
+          <span class="q">Companies</span><span class="h">Follow a business</span></button>
+      </div>
+    </div>
+    ${watchTab==='trademarks' ? viewTrademarks('watch') : viewCompanies('watch')}`;
+}
+
+function valid(id){
+  if (id==='router') return Object.values(S.router).every(v=>v!==null);
+  if (id==='users'){
+    const p = S.users[0];
+    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.mobile.trim();
+  }
+  return true;
+}
+
+/* ── events ────────────────────────────────────────────────────────── */
+function wire(id){
+  if (id==='router'){
+    $('#stage').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+      S.router[b.dataset.k] = b.dataset.v === '1';
+      render();
+    });
+  }
+
+  if (id==='trademarks' || (id==='watch' && watchTab==='trademarks')){
+    const W = id==='watch';
+    const go = async () => {
+      const q = $('#tmQ').value.trim(); if (q.length<2) return;
+      const mode = $('#tmMode').value;
+      $('#tmResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
+      try{
+        const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
+        $('#tmResults').innerHTML = renderTmResults(d, mode, W);
+        wireTmResults(W);
+      }catch(e){ $('#tmResults').innerHTML = '<div class="err">Search unavailable. Try again.</div>'; }
+    };
+    $('#tmGo').onclick = go;
+    $('#tmQ').onkeydown = e => { if (e.key==='Enter') go(); };
+    bindChosen(W);
+  }
+
+  if (id==='companies' || (id==='watch' && watchTab==='companies')){
+    const W = id==='watch';
+    const go = async () => {
+      const q = $('#coQ').value.trim(); if (q.length<2) return;
+      const mode = $('#coMode').value;
+      $('#coResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
+      try{
+        const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
+        $('#coResults').innerHTML = mode==='company'
+          ? renderCoResults(d.results, W) : renderOfficerResults(d.results);
+        wireCoResults(W);
+      }catch(e){ $('#coResults').innerHTML = '<div class="err">Search unavailable. Try again.</div>'; }
+    };
+    $('#coGo').onclick = go;
+    $('#coQ').onkeydown = e => { if (e.key==='Enter') go(); };
+    bindChosen(W);
+  }
+
+  if (id==='watch'){
+    $('#stage').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+      watchTab = b.dataset.tab; render();
+    });
+  }
+
+  if (id==='users'){
+    $('#stage').querySelectorAll('[data-u]').forEach(inp => inp.oninput = () => {
+      const [i,f] = inp.dataset.u.split(':'); S.users[i][f] = inp.value;
+      $('#next').disabled = !valid('users');
+    });
+    $('#stage').querySelectorAll('[data-p]').forEach(inp => inp.onchange = () => {
+      const [i,k] = inp.dataset.p.split(':'); S.users[i].perms[k] = inp.checked;
+    });
+    $('#stage').querySelectorAll('[data-drop-user]').forEach(b => b.onclick = () => {
+      S.users.splice(+b.dataset.dropUser,1); render();
+    });
+    $('#addUser').onclick = () => { S.users.push(blankUser(false)); render(); };
+  }
+}
+
+function bindChosen(W){
+  $('#stage').querySelectorAll('[data-mark]').forEach(cb => cb.onchange = () => {
+    const [i,j] = cb.dataset.mark.split(':').map(Number);
+    (W?S.watch.applicants:S.applicants)[i].marks[j].include = cb.checked;
+  });
+  $('#stage').querySelectorAll('[data-co]').forEach(cb => cb.onchange = () => {
+    (W?S.watch.companies:S.companies)[+cb.dataset.co].include = cb.checked;
+  });
+  $('#stage').querySelectorAll('[data-drop-app]').forEach(b => b.onclick = () => {
+    (W?S.watch.applicants:S.applicants).splice(+b.dataset.dropApp,1); render();
+  });
+  $('#stage').querySelectorAll('[data-rel-app]').forEach(s => s.onchange = () => {
+    S.watch.applicants[+s.dataset.relApp].relationship = s.value;
+  });
+  $('#stage').querySelectorAll('[data-rel-co]').forEach(s => s.onchange = () => {
+    S.watch.companies[+s.dataset.relCo].relationship = s.value;
+  });
+  $('#stage').querySelectorAll('[data-add-similar]').forEach(b => b.onclick = async () => {
+    b.disabled = true; b.textContent = 'Adding…';
+    await addApplicant(b.dataset.addSimilar, W); render();
+  });
+}
+
+function renderTmResults(d, mode, W){
+  const r = d.results || [];
+  if (d.error) return `<div class="err">${esc(d.error)}</div>`;
+  if (!r.length) return `<div class="none">Nothing found. Try a different spelling,
+      or search by the name it's registered under.</div>`;
+  if (mode==='applicant'){
+    return `<div class="rows">${r.map(a=>`
+      <div class="row pick" data-pick-app="${a.ipo_identifier}">
+        <div class="main">
+          <div class="t">${esc(a.name)}</div>
+          <div class="m">${a.trademark_count} trademark${a.trademark_count===1?'':'s'}${
+            a.postcode?' · '+esc(a.postcode):''}${a.kind?' · '+esc(a.kind):''}</div>
+        </div>
+        <div class="act"><button class="ghost">Select</button></div>
+      </div>`).join('')}</div>`;
+  }
+  return `<div class="rows">${r.map(m=>{
+    const a = (m.applicants||[])[0] || {};
+    return `<div class="row pick" data-pick-app="${a.ipo_identifier||''}">
+      <div class="main">
+        <div class="t">${esc(m.mark_text||m.application_number)}
+          <span class="tag">${esc(m.status||'')}</span></div>
+        <div class="m">${esc(m.application_number)}${a.name?' · '+esc(a.name):''}</div>
+      </div>
+      <div class="act"><button class="ghost">Select</button></div>
+    </div>`;}).join('')}</div>
+    <p class="hint">Selecting a trademark brings in everything else that applicant owns.</p>`;
+}
+
+function wireTmResults(W){
+  $('#stage').querySelectorAll('[data-pick-app]').forEach(row => row.onclick = async () => {
+    const ipo = row.dataset.pickApp; if (!ipo) return;
+    row.style.opacity = .5;
+    await addApplicant(ipo, W);
+    render();
+  });
+}
+
+async function addApplicant(ipo, W){
+  const list = W ? S.watch.applicants : S.applicants;
+  if (list.some(a => String(a.ipo) === String(ipo))) return;
+  const d = await api(`/api/applicant/${ipo}`);
+  if (d.error) return;
+  const rec = {
+    ipo: d.applicant.ipo_identifier, name: d.applicant.name,
+    kind: d.applicant.kind, postcode: d.applicant.postcode,
+    marks: (d.trademarks||[]).map(m => ({...m, include:true})),
+    similar: [],
+    relationship: W ? 'competitor' : undefined,
+  };
+  list.push(rec);
+  if (!W){
+    for (const c of (d.companies||[])){
+      if (!S.companies.some(x=>x.company_number===c.company_number))
+        S.companies.push({...c, include:true});
+    }
+  }
+  try{
+    const sim = await api(`/api/applicant/${ipo}/similar`);
+    rec.similar = (sim.results||[]).filter(s => !list.some(a=>String(a.ipo)===String(s.ipo_identifier)));
+  }catch(e){}
+}
+
+function renderCoResults(r, W){
+  if (!r.length) return `<div class="none">No companies found.</div>`;
+  return `<div class="rows">${r.map(c=>`
+    <div class="row pick" data-pick-co='${esc(JSON.stringify(c))}'>
+      <div class="main">
+        <div class="t">${esc(c.company_name)}
+          <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span></div>
+        <div class="m">${esc(c.company_number)}${c.postcode?' · '+esc(c.postcode):''}</div>
+      </div>
+      <div class="act"><button class="ghost">Add</button></div>
+    </div>`).join('')}</div>`;
+}
+
+function renderOfficerResults(r){
+  if (!r.length) return `<div class="none">No one found with that name.</div>`;
+  return `<div class="rows">${r.slice(0,12).map(o=>`
+    <div class="row pick" data-pick-officer="${esc(o.officer_id)}">
+      <div class="main">
+        <div class="t">${esc(o.name)}</div>
+        <div class="m">${esc(o.description||'')}${o.locality?' · '+esc(o.locality):''}</div>
+      </div>
+      <div class="act"><button class="ghost">See companies</button></div>
+    </div>`).join('')}</div>
+    <p class="hint">Several people can share a name — check the location and date of birth
+      before selecting. You can pick more than one if you appear more than once.</p>`;
+}
+
+function wireCoResults(W){
+  $('#stage').querySelectorAll('[data-pick-co]').forEach(row => row.onclick = () => {
+    const c = JSON.parse(row.dataset.pickCo);
+    const list = W ? S.watch.companies : S.companies;
+    if (!list.some(x=>x.company_number===c.company_number))
+      list.push({...c, include:true, relationship: W?'competitor':undefined});
+    render();
+  });
+  $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async () => {
+    row.style.opacity = .5;
+    const d = await api(`/api/officer/${row.dataset.pickOfficer}/companies`);
+    $('#coResults').innerHTML = `
+      <div class="group">
+        <div class="head">
+          <div><div class="t">${esc(d.officer_name||'')}</div>
+            <div class="m">${(d.results||[]).length} appointments — all selected</div></div>
+        </div>
+        <div class="rows" style="border:0;border-radius:0">
+          ${(d.results||[]).map(c=>`
+            <div class="row">
+              <input type="checkbox" checked data-oc='${esc(JSON.stringify(c))}'>
+              <div class="main">
+                <div class="t">${esc(c.company_name)}
+                  <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status)}</span>
+                  ${c.is_current?'':'<span class="tag warn">resigned</span>'}</div>
+                <div class="m">${esc(c.company_number)} · ${esc(c.officer_role||'')}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <button class="ghost" id="addOfficerCos">Add selected companies</button>`;
+    $('#addOfficerCos').onclick = () => {
+      const list = W ? S.watch.companies : S.companies;
+      $('#coResults').querySelectorAll('[data-oc]:checked').forEach(cb => {
+        const c = JSON.parse(cb.dataset.oc);
+        if (!list.some(x=>x.company_number===c.company_number))
+          list.push({...c, include:true, relationship: W?'competitor':undefined});
+      });
+      render();
+    };
+  });
+}
+
+/* ── navigation ────────────────────────────────────────────────────── */
+$('#next').onclick = async () => {
+  const st = steps();
+  await save();
+  if (st[at].id === 'review'){
+    $('#stage').innerHTML = `<div class="card"><h2>You're all set</h2>
+      <p class="lead">We're building your portfolio now. You'll get an email when it's ready.</p></div>`;
+    $('#next').style.display='none'; $('#back').style.display='none';
+    return;
+  }
+  at++; render();
+};
+$('#back').onclick = () => { if (at) { at--; render(); } };
+
+render();
+</script>
+</body>
+</html>
