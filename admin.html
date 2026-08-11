@@ -211,7 +211,7 @@ function card(r){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 10 Aug 21:59';
+window.BUILD = 'build 11 Aug 15:58';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
