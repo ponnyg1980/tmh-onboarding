@@ -118,6 +118,27 @@
   .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
   .none{padding:18px;color:var(--muted);font-size:14px}
   @media(max-width:640px){.grid{grid-template-columns:1fr}.choice{flex-direction:column}}
+
+  /* order summary */
+  .done-head{border-left:3px solid var(--ok)}
+  .sum-table{width:100%;border-collapse:collapse;font-size:14px}
+  .sum-table td{padding:8px 12px 8px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .sum-table tr:first-child td{border-top:0}
+  .sum-table td:nth-child(2),.sum-table td:nth-child(3),.sum-table td:nth-child(4){
+    color:var(--muted);font-size:13px}
+  .group .sum-table td{padding-left:14px}
+  ol.next{margin:0 0 14px;padding-left:20px}
+  ol.next li{margin-bottom:10px}
+  ol.next strong{display:block}
+
+  @media print{
+    body{background:#fff}
+    .wrap{padding:0;max-width:none}
+    .nav,.steps,#printSummary{display:none}
+    .card{border:0;padding:0 0 18px;margin:0;break-inside:avoid}
+    .group,.sum-table tr{break-inside:avoid}
+    h2{font-size:16px}
+  }
 </style>
 </head>
 <body>
@@ -439,6 +460,108 @@ function viewReview(){
     <p class="hint">Anything you unticked stays out of your portfolio. You can add it later.</p>
   </div>`;
 }
+
+/* ── the order summary ────────────────────────────────────────────────
+   The last thing a client sees, and the only record they keep. It lists what
+   was actually set up rather than a count of it — a client who is told "9
+   trademarks" cannot check that; one who is shown all nine can. Printable,
+   because people file these. */
+function viewSummary(){
+  const ref = (S.submissionId || '').slice(0, 8).toUpperCase();
+  const when = new Date().toLocaleDateString('en-GB',
+    {day:'numeric', month:'long', year:'numeric'});
+
+  const markRows = list => list.flatMap(a => a.marks.filter(m => m.include).map(m => `
+    <tr><td><strong>${esc(m.mark_text || m.application_number)}</strong></td>
+        <td>${esc(m.application_number)}</td>
+        <td>${esc(m.status || '')}</td>
+        <td>${m.expiry ? 'renews ' + esc(String(m.expiry).slice(0,10)) : ''}</td></tr>`)).join('');
+
+  const owned   = S.applicants;
+  const ownMarks = owned.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
+  const cos     = S.companies.filter(c=>c.include);
+  const wApps   = S.watch.applicants;
+  const wMarks  = wApps.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
+  const wCos    = S.watch.companies.filter(c=>c.include);
+  const excluded = owned.reduce((n,a)=>n+a.marks.filter(m=>!m.include).length,0);
+
+  const perm = u => Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
+    read:'View the portfolio', request:'Request changes',
+    authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only';
+
+  return `<div class="card done-head">
+      <h2>Your portfolio is being set up</h2>
+      <p class="lead">Reference <strong>${esc(ref)}</strong> · ${when}.
+        Please keep a copy of this summary — print it or save it as a PDF.</p>
+      <button class="ghost" id="printSummary">Print or save as PDF</button>
+    </div>
+
+    <div class="card">
+      <h2>What you have set up</h2>
+      <div class="rows" style="margin-bottom:20px">
+        ${sumRow('Trademarks we will monitor for you', ownMarks)}
+        ${cos.length ? sumRow('Companies linked to your portfolio', cos.length) : ''}
+        ${wMarks || wCos.length ? sumRow('Trademarks on your watchlist', wMarks) : ''}
+        ${wCos.length ? sumRow('Companies on your watchlist', wCos.length) : ''}
+        ${sumRow('People with access', S.users.length)}
+      </div>
+
+      ${owned.length ? `<h3>Your trademarks</h3>
+        ${owned.map(a => `<div class="group">
+            <div class="head"><div><div class="t">${esc(a.name)}</div>
+              <div class="m">Applicant ${esc(a.ipo)} · ${
+                a.marks.filter(m=>m.include).length} in your portfolio</div></div></div>
+            <table class="sum-table">${markRows([a])}</table>
+          </div>`).join('')}
+        ${excluded ? `<p class="hint">${excluded} trademark${excluded===1?'':'s'} you
+          unticked ${excluded===1?'is':'are'} not included. Tell us any time and we will add
+          ${excluded===1?'it':'them'}.</p>` : ''}` : ''}
+
+      ${cos.length ? `<h3>Your companies</h3>
+        <table class="sum-table">${cos.map(c=>`<tr>
+          <td><strong>${esc(c.company_name)}</strong></td>
+          <td>${esc(c.company_number)}</td>
+          <td>${esc(c.company_status||'')}</td><td></td></tr>`).join('')}</table>` : ''}
+
+      ${wApps.length || wCos.length ? `<h3>Your watchlist</h3>
+        <table class="sum-table">
+          ${wApps.map(a=>`<tr><td><strong>${esc(a.name)}</strong></td>
+            <td>${a.marks.filter(m=>m.include).length} trademarks</td>
+            <td>${esc(a.relationship||'')}</td><td></td></tr>`).join('')}
+          ${wCos.map(c=>`<tr><td><strong>${esc(c.company_name)}</strong></td>
+            <td>${esc(c.company_number)}</td>
+            <td>${esc(c.relationship||'')}</td><td></td></tr>`).join('')}
+        </table>` : ''}
+
+      <h3>Who has access</h3>
+      <table class="sum-table">
+        ${S.users.map(u=>`<tr>
+          <td><strong>${esc(u.first)} ${esc(u.last)}</strong>${
+            u.primary?' <span class="tag brand">main contact</span>':''}</td>
+          <td>${esc(u.email)}</td>
+          <td colspan="2">${esc(perm(u))}</td></tr>`).join('')}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>What happens next</h2>
+      <ol class="next">
+        <li><strong>We check the details.</strong> Usually within one working day.
+          If anything needs confirming we will email you before going further.</li>
+        <li><strong>You get your login.</strong> Everyone listed above receives an
+          invitation by email. There is no password to choose — the link signs you in.</li>
+        <li><strong>Monitoring starts.</strong> We watch the UK register for
+          applications that conflict with your marks, and tell you when a renewal is
+          due. You do not need to do anything to switch this on.</li>
+      </ol>
+      <p class="hint" style="margin-bottom:0">Something not right? Get in touch quoting
+        <strong>${esc(ref)}</strong>. Nothing here is fixed — you can add, remove or
+        change any of it later.</p>
+    </div>`;
+}
+
+const sumRow = (label, value) => `<div class="row"><div class="main">
+    <div class="t">${label}</div></div><div class="act"><strong>${value}</strong></div></div>`;
 
 /* ── rendering ─────────────────────────────────────────────────────── */
 function render(){
@@ -781,9 +904,11 @@ $('#next').onclick = async () => {
   const st = steps();
   await save();
   if (st[at].id === 'review'){
-    $('#stage').innerHTML = `<div class="card"><h2>You're all set</h2>
-      <p class="lead">We're building your portfolio now. You'll get an email when it's ready.</p></div>`;
+    $('#stage').innerHTML = viewSummary();
     $('#next').style.display='none'; $('#back').style.display='none';
+    $('#progress').style.display='none';
+    $('#printSummary').onclick = () => window.print();
+    window.scrollTo(0,0);
     return;
   }
   at++; render();
@@ -792,7 +917,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 10 Aug 21:59';
+window.BUILD = 'build 11 Aug 15:58';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
