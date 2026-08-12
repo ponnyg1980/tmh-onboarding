@@ -254,7 +254,8 @@ function snapshot(){
         excluded:   a.marks.filter(m=>!m.include).map(m=>m.application_number),
       })),
       companies: S.companies.filter(c=>c.include)
-                  .map(c=>({company_number:c.company_number, company_name:c.company_name})),
+                  .map(c=>({company_number:c.company_number, company_name:c.company_name,
+                            via:c.via})),
     },
     watchlist: {
       applicants: S.watch.applicants.map(a=>({
@@ -262,7 +263,7 @@ function snapshot(){
         trademarks:a.marks.filter(m=>m.include).map(m=>m.application_number) })),
       companies: S.watch.companies.filter(c=>c.include)
                   .map(c=>({company_number:c.company_number, company_name:c.company_name,
-                            relationship:c.relationship})),
+                            relationship:c.relationship, via:c.via})),
     },
     users: S.users,
     lookup_evidence: EVIDENCE,
@@ -742,9 +743,13 @@ async function showOfficers(number, W, all){
     showOfficers(number, W, true));
   panel.querySelectorAll('[data-officer-pick]').forEach(row => row.onclick = async () => {
     row.style.opacity = .5;
-    const d2 = await api(`/api/officer/${row.dataset.officerPick}/companies`);
+    const id = row.dataset.officerPick;
+    const o  = rows.find(x => String(x.officer_id) === String(id)) || {};
+    const d2 = await api(`/api/officer/${id}/companies`);
     panel.innerHTML = officerCompaniesHtml(d2);
-    wireOfficerCompanies(panel, W);
+    wireOfficerCompanies(panel, W, {source:'officer_of_company', officer_id:id,
+      officer_name: d2.officer_name || o.name, person_number: o.person_number,
+      found_via_company: number});
   });
 }
 
@@ -869,7 +874,7 @@ function officerCompaniesHtml(d){
     <button class="ghost" data-add-officer-cos="1">Add selected companies</button>`;
 }
 
-function wireOfficerCompanies(root, W){
+function wireOfficerCompanies(root, W, via){
   const btn = root.querySelector('[data-add-officer-cos]');
   if (!btn) return;
   btn.onclick = () => {
@@ -877,7 +882,11 @@ function wireOfficerCompanies(root, W){
     root.querySelectorAll('[data-oc]:checked').forEach(cb => {
       const c = JSON.parse(cb.dataset.oc);
       if (!list.some(x=>x.company_number===c.company_number))
-        list.push({...c, include:true, relationship: W?'competitor':undefined});
+        list.push({...c, include:true, relationship: W?'competitor':undefined,
+                   /* How this company entered the portfolio. Provenance, not
+                      identity — a Companies House officer id is not a person.
+                      One human routinely holds several. */
+                   via: via || {source:'company_search'}});
     });
     render();
   };
@@ -893,9 +902,11 @@ function wireCoResults(W){
   });
   $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async () => {
     row.style.opacity = .5;
-    const d = await api(`/api/officer/${row.dataset.pickOfficer}/companies`);
+    const id = row.dataset.pickOfficer;
+    const d  = await api(`/api/officer/${id}/companies`);
     $('#coResults').innerHTML = officerCompaniesHtml(d);
-    wireOfficerCompanies($('#coResults'), W);
+    wireOfficerCompanies($('#coResults'), W, {source:'officer_search',
+      officer_id:id, officer_name:d.officer_name});
   });
 }
 
@@ -917,7 +928,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 02:19';
+window.BUILD = 'build 12 Aug 02:24';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
