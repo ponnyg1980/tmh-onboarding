@@ -165,6 +165,22 @@ const WATCH_TYPES = [
   ['prospect','Prospect'],     ['client','Client'],
 ];
 
+/* Being in a portfolio is a view, not a claim of ownership. A client can
+   legitimately hold a group company's mark, or one they merely want in sight,
+   and neither implies a right to change it. Recorded per item, stated by the
+   client at the moment they are looking at it — the only time they reliably
+   know. Entitlement is derived from this later; it is never inferred from
+   membership. */
+const BASIS = [
+  ['owned',      'We own this',        'Registered to us or our applicant record'],
+  ['group',      'Group company',      'Owned by a company in our group'],
+  ['managed',    'We manage it',       'Someone else owns it; we act for them'],
+  ['monitoring', 'Monitoring only',    'Not ours — we want it in view'],
+];
+const basisSelect = (val, attr) => `<select ${attr} title="Why is this in your portfolio?">` +
+  BASIS.map(([v,l])=>`<option value="${v}" ${(val||'owned')===v?'selected':''}>${l}</option>`).join('') +
+  `</select>`;
+
 const S = {
   submissionId: null,
   version: 0,
@@ -249,13 +265,13 @@ function snapshot(){
     router: S.router,
     portfolio: {
       applicants: S.applicants.map(a => ({
-        ipo_identifier:a.ipo, name:a.name,
+        ipo_identifier:a.ipo, name:a.name, basis:a.basis || 'owned',
         trademarks: a.marks.filter(m=>m.include).map(m=>m.application_number),
         excluded:   a.marks.filter(m=>!m.include).map(m=>m.application_number),
       })),
       companies: S.companies.filter(c=>c.include)
                   .map(c=>({company_number:c.company_number, company_name:c.company_name,
-                            via:c.via})),
+                            basis:c.basis || 'owned', via:c.via})),
     },
     watchlist: {
       applicants: S.watch.applicants.map(a=>({
@@ -329,7 +345,8 @@ function applicantCard(a, i, W){
           ${on} of ${a.marks.length} selected</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${W ? relSelect(a.relationship, `data-rel-app="${i}"`) : ''}
+        ${W ? relSelect(a.relationship, `data-rel-app="${i}"`)
+            : basisSelect(a.basis, `data-basis-app="${i}"`)}
         <button class="ghost" data-drop-app="${i}" ${W?'data-w="1"':''}>Remove</button>
       </div>
     </div>
@@ -396,7 +413,8 @@ function viewCompanies(mode){
               <div class="m">${esc(c.company_number)}${c.postcode?' · '+esc(c.postcode):''}</div>
             </div>
             <div class="act" style="display:flex;gap:8px;align-items:center">
-              ${W?relSelect(c.relationship, `data-rel-co="${i}"`):''}
+              ${W?relSelect(c.relationship, `data-rel-co="${i}"`)
+                 :basisSelect(c.basis, `data-basis-co="${i}"`)}
               <button class="ghost" data-officers="${esc(c.company_number)}"
                       ${W?'data-w="1"':''}>People</button>
             </div>
@@ -500,29 +518,31 @@ function viewSummary(){
     <div class="card">
       <h2>What you have set up</h2>
       <div class="rows" style="margin-bottom:20px">
-        ${sumRow('Trademarks we will monitor for you', ownMarks)}
+        ${sumRow('Trademarks in your portfolio', ownMarks)}
         ${cos.length ? sumRow('Companies linked to your portfolio', cos.length) : ''}
         ${wMarks || wCos.length ? sumRow('Trademarks on your watchlist', wMarks) : ''}
         ${wCos.length ? sumRow('Companies on your watchlist', wCos.length) : ''}
         ${sumRow('People with access', S.users.length)}
       </div>
 
-      ${owned.length ? `<h3>Your trademarks</h3>
+      ${owned.length ? `<h3>Trademarks in your portfolio</h3>
         ${owned.map(a => `<div class="group">
             <div class="head"><div><div class="t">${esc(a.name)}</div>
               <div class="m">Applicant ${esc(a.ipo)} · ${
-                a.marks.filter(m=>m.include).length} in your portfolio</div></div></div>
+                a.marks.filter(m=>m.include).length} in your portfolio ·
+                ${esc(BASIS_LABEL[a.basis||'owned'])}</div></div></div>
             <table class="sum-table">${markRows([a])}</table>
           </div>`).join('')}
         ${excluded ? `<p class="hint">${excluded} trademark${excluded===1?'':'s'} you
           unticked ${excluded===1?'is':'are'} not included. Tell us any time and we will add
           ${excluded===1?'it':'them'}.</p>` : ''}` : ''}
 
-      ${cos.length ? `<h3>Your companies</h3>
+      ${cos.length ? `<h3>Companies in your portfolio</h3>
         <table class="sum-table">${cos.map(c=>`<tr>
           <td><strong>${esc(c.company_name)}</strong></td>
           <td>${esc(c.company_number)}</td>
-          <td>${esc(c.company_status||'')}</td><td></td></tr>`).join('')}</table>` : ''}
+          <td>${esc(c.company_status||'')}</td>
+          <td>${esc(BASIS_LABEL[c.basis||'owned'])}</td></tr>`).join('')}</table>` : ''}
 
       ${wApps.length || wCos.length ? `<h3>Your watchlist</h3>
         <table class="sum-table">
@@ -555,11 +575,17 @@ function viewSummary(){
           applications that conflict with your marks, and tell you when a renewal is
           due. You do not need to do anything to switch this on.</li>
       </ol>
+      <p class="hint">Having something in your portfolio means you can see it and we
+        will monitor it. It does not by itself give anyone the right to make changes
+        to a trademark — that is set separately, per person, and we will confirm it
+        with you before acting.</p>
       <p class="hint" style="margin-bottom:0">Something not right? Call us on
         <a href="tel:+441618335400">+44 161 833 5400</a> quoting <strong>${esc(ref)}</strong>.
         Nothing here is fixed — you can add, remove or change any of it later.</p>
     </div>`;
 }
+
+const BASIS_LABEL = Object.fromEntries(BASIS.map(([v,l])=>[v,l]));
 
 const sumRow = (label, value) => `<div class="row"><div class="main">
     <div class="t">${label}</div></div><div class="act"><strong>${value}</strong></div></div>`;
@@ -692,6 +718,12 @@ function bindChosen(W){
   });
   $('#stage').querySelectorAll('[data-rel-co]').forEach(s => s.onchange = () => {
     S.watch.companies[+s.dataset.relCo].relationship = s.value;
+  });
+  $('#stage').querySelectorAll('[data-basis-app]').forEach(s => s.onchange = () => {
+    S.applicants[+s.dataset.basisApp].basis = s.value;
+  });
+  $('#stage').querySelectorAll('[data-basis-co]').forEach(s => s.onchange = () => {
+    S.companies[+s.dataset.basisCo].basis = s.value;
   });
   $('#stage').querySelectorAll('[data-add-similar]').forEach(b => b.onclick = async () => {
     b.disabled = true; b.textContent = 'Adding…';
@@ -999,7 +1031,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 03:18';
+window.BUILD = 'build 12 Aug 03:55';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
