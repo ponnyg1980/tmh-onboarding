@@ -880,19 +880,24 @@ function officerCompaniesHtml(d){
    appears whenever the name or address is entered differently. Ten records for
    one person is not unusual. Without this, "find all my companies" quietly
    returns a third of them. */
-async function offerOtherRecords(root, W, via){
+async function offerOtherRecords(root, W, via, also){
   if (!via || !via.officer_id) return;
   let d;
-  try { d = await api(`/api/officer/${via.officer_id}/others`); } catch(e){ return; }
+  const q = also ? `?also=${encodeURIComponent(also)}` : '';
+  try { d = await api(`/api/officer/${via.officer_id}/others${q}`); } catch(e){ return; }
   const r = (d.results || []).filter(x => (x.appointment_count || 0) > 0);
-  if (!r.length) return;
+  root.querySelectorAll('[data-other-records]').forEach(n => n.remove());
+  if (!r.length && !also) return;
 
   const total = r.reduce((n,x)=>n+(x.appointment_count||0),0);
   const box = document.createElement('div');
   box.className = 'card';
+  box.setAttribute('data-other-records','1');
   box.style.cssText = 'background:var(--warn-tint);border-color:transparent;margin-bottom:14px';
   box.innerHTML = `
-    <div class="t">You appear on the register ${r.length} more time${r.length===1?'':'s'}</div>
+    <div class="t">${r.length
+      ? `You appear on the register ${r.length} more time${r.length===1?'':'s'}`
+      : 'No other records found for that spelling'}</div>
     <p class="m" style="margin:4px 0 12px">Companies House does not link a person's
       records together. These share your date of birth (${esc(d.date_of_birth||'')}) and name,
       and hold ${total} more appointment${total===1?'':'s'} between them. Add any that are you.</p>
@@ -906,8 +911,21 @@ async function offerOtherRecords(root, W, via){
         <div class="act"><button class="ghost" data-add-other="${esc(o.officer_id)}"
           data-add-name="${esc(o.name)}">Add these</button></div>
       </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+      <span class="m">Filed under a different spelling?</span>
+      <input id="otherSpelling" placeholder="e.g. Jonathon Paton" value="${esc(also||'')}"
+        style="font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px">
+      <button class="ghost" id="otherSpellingGo">Look again</button>
     </div>`;
   root.prepend(box);
+
+  const again = () => {
+    const v = box.querySelector('#otherSpelling').value.trim();
+    if (v.length > 2) offerOtherRecords(root, W, via, v);
+  };
+  box.querySelector('#otherSpellingGo').onclick = again;
+  box.querySelector('#otherSpelling').onkeydown = e => { if (e.key === 'Enter') again(); };
 
   box.querySelectorAll('[data-add-other]').forEach(b => b.onclick = async () => {
     b.disabled = true; b.textContent = 'Adding…';
@@ -981,7 +999,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 03:16';
+window.BUILD = 'build 12 Aug 03:18';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
