@@ -276,7 +276,7 @@ const SPEND = [['none','No set limit'], ['25000','Up to £250'], ['50000','Up to
 
 /* ── state ─────────────────────────────────────────────────────────── */
 const S = {
-  submissionId: null, version: 0,
+  submissionId: null, version: 0, seed: null,
   owner: null, records: [], trademarks: [], counts: {},
   ownerConfirmation: null,
   ownerCorrection: { name:'', address:'', company_number:'', note:'' },
@@ -488,6 +488,8 @@ function viewPrimary(){
   const p = S.people[0];
   return `<div class="card">
     <h2>Main contact</h2>
+    ${S.seed ? `<div class="note">These are the details we hold for you. Correct
+      anything that is wrong — nothing here is fixed.</div>` : ''}
     <p class="lead">Who should we contact first about UKIPO correspondence, deadlines,
       potential conflicts and disputes? Being the main contact does not by itself carry
       authority to instruct work — we ask about that separately.</p>
@@ -785,6 +787,7 @@ async function save(){
   S.version += 1;
   const st = snapshot();
   const body = { submission_id:S.submissionId, version:S.version, state:st,
+    seed_token: S.seed ? S.seed.seed_token : null,
     input: {
       owner_group_key: S.owner ? S.owner.group_key : null,
       owner_name: S.owner ? S.owner.name : null,
@@ -919,11 +922,38 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 12 Aug 07:00';
+window.BUILD = 'build 12 Aug 07:31';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
-const startFrom = new URLSearchParams(location.search).get('applicant');
-if (startFrom) loadOwner(startFrom); else render();
+/* A seeded client arrives knowing who they are. What we hold is pre-filled and
+   plainly marked as ours to confirm — it is what we believe, not what they have
+   told us, and every field stays editable. */
+async function loadSeed(tok){
+  $('#stage').innerHTML = '<div class="card"><div class="none"><span class="spin"></span> ' +
+    'Loading your details…</div></div>';
+  let d;
+  try { d = await api(`/api/seed/${tok}`); } catch(e){ d = {error:'not found'}; }
+  if (d.error){
+    $('#stage').innerHTML = `<div class="card"><div class="err">That link is not valid.
+      Please call us on <a href="tel:+441618335400">+44 161 833 5400</a>.</div></div>`;
+    return;
+  }
+  S.seed = d;
+  const c = d.contact || {};
+  const p = S.people[0] || blankPerson(true);
+  p.first = c.first_name || ''; p.last = c.last_name || '';
+  p.email = c.email || '';      p.phone = c.phone || '';
+  S.people = [p];
+  const ipo = (d.applicant_ids || [])[0];
+  if (ipo) await loadOwner(ipo); else render();
+}
+
+const params = new URLSearchParams(location.search);
+const seedTok = params.get('seed');
+const startFrom = params.get('applicant');
+if (seedTok) loadSeed(seedTok);
+else if (startFrom) loadOwner(startFrom);
+else render();
 
 </script>
 </body>
