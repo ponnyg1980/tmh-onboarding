@@ -620,6 +620,7 @@ function render(){
 let tmSearch = null;   // {W, mode, data, q}
 let coSearch = null;   // {W, mode, results, q}
 let coOpen   = null;   // {officer_id, data} — the expanded officer, if any
+let otherOpen = null;  // {officer_id, data} — an expanded *other* record of that person
 
 let watchTab = 'trademarks';
 function viewWatch(){
@@ -977,7 +978,7 @@ async function offerOtherRecords(root, W, via, also){
             o.locality ? ' · '+esc(o.locality) : ''}</div>
         </div>
         <div class="act"><button class="ghost" data-add-other="${esc(o.officer_id)}"
-          data-add-name="${esc(o.name)}">Add these</button></div>
+          data-add-name="${esc(o.name)}">See companies</button></div>
       </div>`).join('')}
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
@@ -995,21 +996,34 @@ async function offerOtherRecords(root, W, via, also){
   box.querySelector('#otherSpellingGo').onclick = again;
   box.querySelector('#otherSpelling').onkeydown = e => { if (e.key === 'Enter') again(); };
 
+  /* Show, never blind-add. One of Jon's records holds six appointments, every
+     one of them resigned or at a dissolved company — "Add these" added nothing
+     and said nothing. Expanding shows the companies, pre-ticks the ones that
+     are current and trading, and leaves the rest visible to tick. */
   box.querySelectorAll('[data-add-other]').forEach(b => b.onclick = async () => {
-    b.disabled = true; b.textContent = 'Adding…';
     const id = b.dataset.addOther;
-    const d2 = await api(`/api/officer/${id}/companies`);
-    const list = W ? S.watch.companies : S.companies;
-    (d2.results || []).filter(c => c.is_current && c.company_status === 'active')
-      .forEach(c => {
-        if (!list.some(x => x.company_number === c.company_number))
-          list.push({...c, include:true, relationship: W?'competitor':undefined,
-                     via:{source:'officer_other_record', officer_id:id,
-                          officer_name:b.dataset.addName,
-                          merged_from:via.officer_id}});
-      });
-    render();
+    if (otherOpen && otherOpen.officer_id === id) { otherOpen = null; }
+    else {
+      b.disabled = true; b.textContent = 'Loading…';
+      otherOpen = { officer_id: id, name: b.dataset.addName,
+                    data: await api(`/api/officer/${id}/companies`) };
+    }
+    offerOtherRecords(root, W, via, also);
   });
+
+  if (otherOpen) {
+    const row = box.querySelector(`[data-add-other="${otherOpen.officer_id}"]`);
+    if (row) {
+      row.textContent = 'Hide';
+      const panel = document.createElement('div');
+      panel.style.cssText = 'padding:0 14px 14px';
+      panel.innerHTML = officerCompaniesHtml(otherOpen.data);
+      row.closest('.row').after(panel);
+      wireOfficerCompanies(panel, W, {source:'officer_other_record',
+        officer_id: otherOpen.officer_id, officer_name: otherOpen.name,
+        merged_from: via.officer_id});
+    }
+  }
 }
 
 function wireOfficerCompanies(root, W, via){
@@ -1078,7 +1092,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 04:16';
+window.BUILD = 'build 12 Aug 04:25';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
