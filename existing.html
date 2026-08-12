@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirm your trademark details — The Trademark Helpline</title>
+<style>
+  :root{
+    --ink:#14161a; --muted:#6b7280; --line:#e4e6ea; --bg:#f7f8fa; --card:#fff;
+    --brand:#c81b5b; --brand-dark:#a5164b; --brand-tint:#fdeef4;
+    --ok:#0f7b4f; --ok-tint:#e8f5ee; --warn:#8a5a00; --warn-tint:#fdf3e0;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}
+  header h1{font-size:21px;margin:0;letter-spacing:-.01em}
+  header .sub{color:var(--muted);font-size:13px}
+
+  /* progress */
+  .steps{display:flex;gap:6px;margin-bottom:26px;flex-wrap:wrap}
+  .steps div{flex:1;min-width:60px;height:3px;border-radius:2px;background:var(--line)}
+  .steps div.done{background:var(--brand)}
+  .steps div.now{background:var(--brand);opacity:.45}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:24px;margin-bottom:16px}
+  h2{font-size:18px;margin:0 0 6px;letter-spacing:-.01em}
+  .lead{color:var(--muted);margin:0 0 20px;font-size:14px}
+  h3{font-size:14px;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+
+  /* choices */
+  .choice{display:flex;gap:10px;margin:10px 0 18px}
+  .choice button{flex:1;padding:14px;border:1px solid var(--line);background:#fff;
+    border-radius:var(--r);font:inherit;cursor:pointer;text-align:left}
+  .choice button:hover{border-color:var(--brand)}
+  .choice button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);
+    box-shadow:inset 0 0 0 1px var(--brand)}
+  .choice .q{font-weight:600;display:block}
+  .choice .h{color:var(--muted);font-size:13px}
+
+  .ask{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .ask p{margin:0 0 4px;font-weight:600}
+  .ask .h{color:var(--muted);font-size:13px;margin-bottom:12px}
+
+  /* search */
+  .searchbar{display:flex;gap:8px;margin-bottom:6px}
+  .searchbar select,.searchbar input,.searchbar button{
+    font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .searchbar input{flex:1;min-width:0}
+  .searchbar input:focus,.searchbar select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .searchbar button{background:var(--brand);color:#fff;border-color:var(--brand);
+    cursor:pointer;font-weight:600;padding-inline:20px}
+  .searchbar button:disabled{opacity:.5;cursor:default}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+
+  /* rows */
+  .rows{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+  .row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line);
+       background:#fff}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:#fcfcfd}
+  .row input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--brand);flex:none}
+  .row .main{flex:1;min-width:0}
+  .row .t{font-weight:600}
+  .row .m{color:var(--muted);font-size:13px;margin-top:1px}
+  .row .act{flex:none}
+  .row.pick{cursor:pointer}
+
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;
+       border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:1px}
+  .tag.ok{background:var(--ok-tint);color:var(--ok);border-color:transparent}
+  .tag.warn{background:var(--warn-tint);color:var(--warn);border-color:transparent}
+  .tag.brand{background:var(--brand-tint);color:var(--brand-dark);border-color:transparent}
+
+  .group{border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+  .group>.head{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       padding:13px 14px;background:#fbfbfc;border-bottom:1px solid var(--line)}
+  .group>.head .t{font-weight:600}
+  .group>.head .m{color:var(--muted);font-size:13px}
+
+  button.link{background:none;border:0;color:var(--brand);font:inherit;cursor:pointer;
+       padding:0;text-decoration:underline}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:8px;
+       padding:7px 12px;font:inherit;cursor:pointer;font-size:13px}
+  button.ghost:hover{border-color:var(--brand);color:var(--brand-dark)}
+
+  /* users */
+  .user{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+  .user .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .grid input{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px}
+  .grid input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .perms{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .perms label{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;
+       border:1px solid var(--line);border-radius:99px;cursor:pointer}
+  .perms input{accent-color:var(--brand)}
+  .perms label:has(input:checked){border-color:var(--brand);background:var(--brand-tint)}
+
+  /* nav */
+  .nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}
+  .nav .right{display:flex;gap:10px;align-items:center}
+  .primary{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:12px 26px;
+       font:inherit;font-weight:600;cursor:pointer}
+  .primary:disabled{opacity:.45;cursor:default}
+  .secondary{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 20px;
+       font:inherit;cursor:pointer}
+  .saved{color:var(--ok);font-size:13px}
+
+  .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);
+       border-radius:var(--r);font-size:14px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+       border-top-color:var(--brand);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+  .none{padding:18px;color:var(--muted);font-size:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}.choice{flex-direction:column}}
+
+  /* order summary */
+  .done-head{border-left:3px solid var(--ok)}
+  .sum-table{width:100%;border-collapse:collapse;font-size:14px}
+  .sum-table td{padding:8px 12px 8px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .sum-table tr:first-child td{border-top:0}
+  .sum-table td:nth-child(2),.sum-table td:nth-child(3),.sum-table td:nth-child(4){
+    color:var(--muted);font-size:13px}
+  .group .sum-table td{padding-left:14px}
+  ol.next{margin:0 0 14px;padding-left:20px}
+  ol.next li{margin-bottom:10px}
+  ol.next strong{display:block}
+
+  @media print{
+    body{background:#fff}
+    .wrap{padding:0;max-width:none}
+    .nav,.steps,#printSummary{display:none}
+    .card{border:0;padding:0 0 18px;margin:0;break-inside:avoid}
+    .group,.sum-table tr{break-inside:avoid}
+    h2{font-size:16px}
+  }
+
+  /* questionnaire */
+  .facts{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+  .facts div.f{display:flex;gap:14px;padding:11px 14px;border-bottom:1px solid var(--line);
+       background:#fff;font-size:14px}
+  .facts div.f:last-child{border-bottom:0}
+  .facts .k{color:var(--muted);width:190px;flex:none}
+  .facts .v{font-weight:600}
+  table.tm{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px}
+  table.tm th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
+       color:var(--muted);font-weight:500;padding:0 10px 8px 0}
+  table.tm td{padding:9px 10px 9px 0;border-top:1px solid var(--line);vertical-align:top}
+  table.tm tr.j td{background:var(--warn-tint)}
+  .who{border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+  .who>.hd{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       padding:13px 14px;background:#fbfbfc;border-bottom:1px solid var(--line)}
+  .who .bd{padding:16px}
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:6px 0 14px}
+  .roles button{text-align:left;padding:12px;border:1px solid var(--line);background:#fff;
+       border-radius:var(--r);font:inherit;cursor:pointer}
+  .roles button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);
+       box-shadow:inset 0 0 0 1px var(--brand)}
+  .roles .q{font-weight:600;display:block}
+  .roles .h{color:var(--muted);font-size:12px}
+  .perm{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .perm:first-child{border-top:0}
+  .perm .lbl{flex:1}
+  .perm .sub{color:var(--muted);font-size:12px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+  .seg button{border:0;background:#fff;font:inherit;font-size:13px;padding:6px 12px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--brand);color:#fff}
+  .note{background:var(--warn-tint);border-radius:8px;padding:12px 14px;font-size:13px;
+       color:var(--warn);margin-bottom:14px}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Confirm your trademark details</h1>
+    <span class="sub">The Trademark Helpline</span>
+    <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
+  </header>
+  <div class="steps" id="progress"></div>
+  <div id="stage"></div>
+  <div class="nav">
+    <button class="secondary" id="back">Back</button>
+    <div class="right">
+      <span class="saved" id="saved"></span>
+      <button class="primary" id="next">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Compliance, Contacts & Authority Questionnaire — existing clients.
+   Its job is not to collect a signature. It is to establish who may instruct
+   what, on behalf of which owner, so the right agreement can be generated and
+   the right verification demanded. */
+
+const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* What the register said at the moment of the claim. A confirmation is only
+   evidence if you can show what was confirmed. */
+const EVIDENCE = [];
+async function api(path){
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error('lookup failed');
+  const d = await r.json();
+  EVIDENCE.push({ at:new Date().toISOString(), endpoint:path,
+                  counts: d.counts, error: d.error });
+  return d;
+}
+
+/* ── the four roles ───────────────────────────────────────────────────
+   Presented as roles because "Level 3" means nothing to a client. Stored as
+   both the role and the permissions it resolved to on the day, so redefining a
+   role later cannot silently change what somebody was granted — or contradict
+   an LOA they have already signed. */
+const PERMISSIONS = [
+  ['correspondence',     'Receive correspondence and notifications',
+                         'Deadlines, UKIPO letters, conflict alerts'],
+  ['applications',       'Authorise new trademark applications', ''],
+  ['renewals',           'Authorise renewals and routine administration', ''],
+  ['fees',               'Approve work that incurs fees',
+                         'A spending limit applies unless you set otherwise'],
+  ['disputes',           'Instruct disputes and enforcement action',
+                         'Oppositions, infringement, defending a challenge'],
+  ['register_changes',   'Authorise changes to existing registrations', ''],
+  ['ownership_sensitive','Instruct ownership changes and other irreversible actions',
+                         'Assignment, surrender, withdrawal'],
+  ['manage_people',      'Add or remove other authorised people', ''],
+];
+
+const ROLES = [
+  ['notification',  'Notification Contact',
+   'Receives correspondence and can discuss matters. Cannot instruct work or incur fees.',
+   {correspondence:true}],
+  ['manager',       'Trademark Manager',
+   'Can instruct applications, renewals and routine work within a spending limit.',
+   {correspondence:true, applications:true, renewals:true, fees:true}],
+  ['decision_maker','Authorised Decision Maker',
+   'Everything a manager can do, plus disputes, enforcement and changes to existing rights.',
+   {correspondence:true, applications:true, renewals:true, fees:true,
+    disputes:true, register_changes:true}],
+  ['signatory',     'Authorised Signatory',
+   'Can appoint TMH, accept terms, sign the Letter of Authority and manage who else is authorised.',
+   {correspondence:true, applications:true, renewals:true, fees:true, disputes:true,
+    register_changes:true, ownership_sensitive:true, manage_people:true}],
+];
+const ROLE_LABEL = Object.fromEntries(ROLES.map(([v,l])=>[v,l]));
+const roleDefaults = v => ({...(ROLES.find(r=>r[0]===v)||[])[3]});
+
+const RELATIONSHIPS = [
+  ['director','Director / Owner'], ['employee','Employee'],
+  ['company_secretary','Company Secretary'], ['in_house_legal','In-house Legal'],
+  ['external_legal','External Legal Adviser'],
+  ['accountant','Accountant / Professional Adviser'], ['other','Other'],
+];
+const SIGNATORY_BASIS = [
+  ['director','Director'], ['proprietor','Proprietor / individual owner'],
+  ['partner','Partner'], ['company_secretary','Company Secretary'],
+  ['delegated','Employee with delegated authority'],
+  ['attorney','Attorney / legal representative'], ['other','Other written authority'],
+];
+const SPEND = [['none','No set limit'], ['25000','Up to £250'], ['50000','Up to £500'],
+               ['100000','Up to £1,000'], ['custom','Custom']];
+
+/* ── state ─────────────────────────────────────────────────────────── */
+const S = {
+  submissionId: null, version: 0,
+  owner: null, records: [], trademarks: [], counts: {},
+  ownerConfirmation: null,
+  ownerCorrection: { name:'', address:'', company_number:'', note:'' },
+  portfolioConfirmation: null, portfolioNote: '',
+  people: [],
+  billing: { mode:'primary', name:'', email:'', phone:'', po:false, poDetail:'' },
+  signatory: { contact_key:'', basis:'', confirmed:false },
+};
+
+function blankPerson(primary){
+  return { key: 'p' + Math.random().toString(36).slice(2,9),
+           first:'', last:'', job:'', email:'', phone:'', relationship:'',
+           primary: !!primary, portal:'none',
+           role: primary ? 'decision_maker' : 'notification',
+           perms: roleDefaults(primary ? 'decision_maker' : 'notification'),
+           spendBasis:'100000', spendCustom:'',
+           scope:'all', scopeIds:[] };
+}
+
+const STEPS = [
+  ['owner',      'Your business'],
+  ['portfolio',  'Your trademarks'],
+  ['primary',    'Main contact'],
+  ['others',     'Other contacts'],
+  ['authority',  'Decision makers'],
+  ['signatory',  'Authorised signatory'],
+  ['review',     'Review'],
+];
+let at = 0;
+
+/* ── entry ─────────────────────────────────────────────────────────── */
+async function loadOwner(ipo){
+  $('#stage').innerHTML = '<div class="card"><div class="none"><span class="spin"></span> ' +
+    'Looking up your trademark records…</div></div>';
+  try {
+    const d = await api(`/api/owner/${ipo}`);
+    if (d.error) throw new Error(d.error);
+    S.owner = { ...d.owner, group_key: d.owner_group_key };
+    S.records = d.records || [];
+    S.trademarks = d.trademarks || [];
+    S.counts = d.counts || {};
+    if (!S.people.length) S.people = [ blankPerson(true) ];
+    render();
+  } catch(e) {
+    $('#stage').innerHTML = `<div class="card"><div class="err">We could not load those
+      records. Please check the link you were sent, or call us on
+      <a href="tel:+441618335400">+44 161 833 5400</a>.</div></div>`;
+  }
+}
+
+function viewFinder(){
+  return `<div class="card">
+    <h2>Find your business</h2>
+    <p class="lead">Normally you would arrive here from a link we sent you, which already
+      knows who you are. Search by the name your trademarks are registered under.</p>
+    <div class="searchbar">
+      <input id="ownQ" placeholder="e.g. your company name" autocomplete="off">
+      <button id="ownGo">Search</button>
+    </div>
+    <div id="ownResults"></div>
+  </div>`;
+}
+
+/* ── 1. the owner ──────────────────────────────────────────────────── */
+function viewOwner(){
+  if (!S.owner) return viewFinder();
+  const o = S.owner, a = o.address || {};
+  const addr = [a.address_line, a.locality, a.region, a.postcode, a.country]
+    .filter(Boolean).join(', ');
+  const yn = (v,l,h) => `<button data-oc="${v}" aria-pressed="${S.ownerConfirmation===v}">
+      <span class="q">${l}</span><span class="h">${h}</span></button>`;
+
+  return `<div class="card">
+    <h2>Your business</h2>
+    <p class="lead">This is what the trademark register holds for you. We are asking you to
+      confirm it, not to change it here — a change of name or address and a change of
+      ownership are different processes, and we handle them differently.</p>
+
+    <div class="facts">
+      <div class="f"><span class="k">Owner on the register</span><span class="v">${esc(o.name)}</span></div>
+      ${o.company_number ? `<div class="f"><span class="k">Company number</span>
+        <span class="v">${esc(o.company_number)}</span></div>` : ''}
+      ${addr ? `<div class="f"><span class="k">Address</span><span class="v">${esc(addr)}</span></div>` : ''}
+      <div class="f"><span class="k">Records held</span><span class="v">${S.records.length}</span></div>
+    </div>
+
+    ${S.records.length > 1 ? `<div class="note">
+      <b>You appear on the register ${S.records.length} times.</b> The IPO does not merge
+      records, so a portfolio is often split across them. We have combined them below —
+      tell us if any of these are not you.
+      <div class="rows" style="margin:10px 0 0">
+        ${S.records.map(r=>`<div class="row">
+          <div class="main"><div class="t">${esc(r.name)}</div>
+            <div class="m">Applicant ${r.ipo_identifier} · ${r.trademark_count} trademarks${
+              r.postcode ? ' · '+esc(r.postcode) : ''}${
+              r.same_address ? '' : ' · different address on file'}</div></div>
+        </div>`).join('')}
+      </div></div>` : ''}
+
+    <h3>Are these details correct?</h3>
+    <div class="choice">
+      ${yn('confirmed','Yes, that is correct','Nothing has changed')}
+      ${yn('changed','No, something has changed','Tell us what should be different')}
+      ${yn('unsure','I am not sure','We will check it with you')}
+    </div>
+
+    ${S.ownerConfirmation === 'changed' ? `<div class="ask">
+      <p>What should it say?</p>
+      <div class="h">We will not change the register from this form. This creates a task
+        for us to check and, if needed, file the correct change with the IPO.</div>
+      <div class="grid">
+        <div><label>Correct owner name</label>
+          <input data-corr="name" value="${esc(S.ownerCorrection.name)}"></div>
+        <div><label>Correct company number</label>
+          <input data-corr="company_number" value="${esc(S.ownerCorrection.company_number)}"></div>
+      </div>
+      <div style="margin-top:10px"><label style="font-size:12px;color:var(--muted)">Correct address</label>
+        <input data-corr="address" style="width:100%;font:inherit;padding:9px 10px;
+          border:1px solid var(--line);border-radius:8px" value="${esc(S.ownerCorrection.address)}"></div>
+      <div style="margin-top:10px"><label style="font-size:12px;color:var(--muted)">Anything else we should know</label>
+        <input data-corr="note" style="width:100%;font:inherit;padding:9px 10px;
+          border:1px solid var(--line);border-radius:8px" value="${esc(S.ownerCorrection.note)}"></div>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ── 2. the portfolio ──────────────────────────────────────────────── */
+function viewPortfolio(){
+  const t = S.trademarks, c = S.counts;
+  const yn = (v,l,h) => `<button data-pc="${v}" aria-pressed="${S.portfolioConfirmation===v}">
+      <span class="q">${l}</span><span class="h">${h}</span></button>`;
+
+  return `<div class="card">
+    <h2>Your trademarks</h2>
+    <p class="lead">Everything the register associates with ${esc(S.owner.name)}${
+      S.records.length>1 ? ` across ${S.records.length} records` : ''}. Confirming this
+      does not by itself give anyone authority — it tells us the portfolio is right.</p>
+
+    <div class="facts">
+      <div class="f"><span class="k">Trademarks</span><span class="v">${c.trademarks ?? t.length}</span></div>
+      <div class="f"><span class="k">Where we are the appointed agent</span>
+        <span class="v">${c.tmh_represented ?? '—'}</span></div>
+      ${c.jointly_owned ? `<div class="f"><span class="k">Jointly owned</span>
+        <span class="v">${c.jointly_owned}</span></div>` : ''}
+    </div>
+
+    ${c.jointly_owned ? `<div class="note"><b>${c.jointly_owned} of these are owned jointly
+      with someone else.</b> Authority from you does not extend to another proprietor, so we
+      will confirm those separately before acting on them. They are shaded below.</div>` : ''}
+
+    <table class="tm">
+      <tr><th>Trademark</th><th>Number</th><th>Status</th><th>Agent on the register</th></tr>
+      ${t.map(m=>`<tr class="${m.jointly_owned?'j':''}">
+        <td><strong>${esc(m.mark_text || m.application_number)}</strong>${
+          m.jointly_owned ? `<div class="m">with ${esc((m.applicants||[])
+            .filter(a=>String(a.ipo_identifier)!==String(S.owner.ipo_identifier))
+            .map(a=>a.name).join(', '))}</div>` : ''}</td>
+        <td>${esc(m.application_number)}</td>
+        <td>${esc(m.status||'')}</td>
+        <td>${m.tmh_representative === true ? '<span class="tag ok">The Trademark Helpline</span>'
+             : m.tmh_representative === null ? '<span class="tag">not checked</span>'
+             : esc((m.representatives||[])[0] || 'none recorded')}</td>
+      </tr>`).join('')}
+    </table>
+
+    <h3>Does this portfolio look correct?</h3>
+    <div class="choice">
+      ${yn('confirmed','Yes, that is all of it','')}
+      ${yn('missing','Something is missing','A trademark we hold is not listed')}
+      ${yn('not_ours','Something here is not ours','Listed but not owned by us')}
+      ${yn('help','I need help checking','Ask us to go through it with you')}
+    </div>
+    ${S.portfolioConfirmation && S.portfolioConfirmation!=='confirmed' ? `<div class="ask">
+      <p>Tell us more</p>
+      <div class="h">This creates a task for us to check against the register.</div>
+      <input id="pfNote" style="width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);
+        border-radius:8px" value="${esc(S.portfolioNote)}"
+        placeholder="e.g. we also own BRANDNAME, applied for last year">
+    </div>` : ''}
+  </div>`;
+}
+
+/* ── people ────────────────────────────────────────────────────────── */
+function personFields(p, i){
+  return `<div class="grid">
+      <div><label>First name</label><input data-p="${i}:first" value="${esc(p.first)}"></div>
+      <div><label>Last name</label><input data-p="${i}:last" value="${esc(p.last)}"></div>
+      <div><label>Job title</label><input data-p="${i}:job" value="${esc(p.job)}"></div>
+      <div><label>Email</label><input data-p="${i}:email" type="email" value="${esc(p.email)}"></div>
+      <div><label>Telephone</label><input data-p="${i}:phone" value="${esc(p.phone)}"></div>
+      <div><label>Relationship to ${esc(S.owner.name)}</label>
+        <select data-p="${i}:relationship">
+          <option value="">Please choose…</option>
+          ${RELATIONSHIPS.map(([v,l])=>`<option value="${v}" ${p.relationship===v?'selected':''}>${l}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="perm" style="margin-top:12px">
+      <div class="lbl">Should this person have access to the Temmy portal?
+        <div class="sub">Portal access is not the same as authority to instruct work</div></div>
+      <div class="seg">
+        ${[['none','No access'],['user','User'],['administrator','Administrator']]
+          .map(([v,l])=>`<button data-portal="${i}:${v}" aria-pressed="${p.portal===v}">${l}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function viewPrimary(){
+  const p = S.people[0];
+  return `<div class="card">
+    <h2>Main contact</h2>
+    <p class="lead">Who should we contact first about UKIPO correspondence, deadlines,
+      potential conflicts and disputes? Being the main contact does not by itself carry
+      authority to instruct work — we ask about that separately.</p>
+    ${personFields(p, 0)}
+  </div>`;
+}
+
+function viewOthers(){
+  const rest = S.people.slice(1);
+  return `<div class="card">
+    <h2>Other contacts</h2>
+    <p class="lead">Who else should receive important trademark correspondence? These are
+      people we copy in. They do not need decision-making authority to be kept informed.</p>
+    ${rest.length ? rest.map((p,n)=>{
+      const i = n + 1;
+      return `<div class="who"><div class="hd">
+          <strong>${esc([p.first,p.last].filter(Boolean).join(' ')) || 'Contact ' + i}</strong>
+          <button class="link" data-drop="${i}">Remove</button></div>
+        <div class="bd">${personFields(p, i)}</div></div>`;
+    }).join('') : '<div class="empty">No one else added. Most clients add at least one.</div>'}
+    <button class="ghost" id="addPerson" style="margin-bottom:20px">Add another person</button>
+
+    <h3>Billing</h3>
+    <p class="hint">Who should receive invoices? Receiving invoices is not the same as being
+      able to approve work that costs money — we ask about that on the next step.</p>
+    <div class="choice">
+      ${[['primary','Same as main contact'],['other','Someone else']]
+        .map(([v,l])=>`<button data-bill="${v}" aria-pressed="${S.billing.mode===v}">
+          <span class="q">${l}</span></button>`).join('')}
+    </div>
+    ${S.billing.mode==='other' ? `<div class="grid">
+      <div><label>Name</label><input data-b="name" value="${esc(S.billing.name)}"></div>
+      <div><label>Email</label><input data-b="email" type="email" value="${esc(S.billing.email)}"></div>
+      <div><label>Telephone</label><input data-b="phone" value="${esc(S.billing.phone)}"></div>
+    </div>` : ''}
+    <div class="perm" style="margin-top:12px">
+      <div class="lbl">Do your invoices need a purchase order number?</div>
+      <div class="seg">
+        ${[['yes','Yes'],['no','No']].map(([v,l])=>
+          `<button data-po="${v}" aria-pressed="${S.billing.po === (v==='yes')}">${l}</button>`).join('')}
+      </div>
+    </div>
+    ${S.billing.po ? `<div style="margin-top:10px">
+      <label style="font-size:12px;color:var(--muted)">PO number or instructions</label>
+      <input data-b="poDetail" style="width:100%;font:inherit;padding:9px 10px;
+        border:1px solid var(--line);border-radius:8px" value="${esc(S.billing.poDetail)}"></div>` : ''}
+  </div>`;
+}
+
+/* ── 5. authority ──────────────────────────────────────────────────── */
+function viewAuthority(){
+  const named = S.people.filter(p => p.first || p.last || p.email);
+  return `<div class="card">
+    <h2>Who can instruct what?</h2>
+    <p class="lead">Authority is held per person, per owner — not once for your whole
+      account. Pick the closest role and adjust anything underneath it.</p>
+    <div class="note"><b>Nothing here happens automatically.</b> Saying someone may instruct
+      an irreversible action means we will accept the instruction from them. It never means
+      the system will act on a click — those always need a fresh instruction, verification
+      and a person at our end.</div>
+
+    ${named.map((p,n)=>{
+      const i = S.people.indexOf(p);
+      return `<div class="who">
+        <div class="hd">
+          <div><strong>${esc([p.first,p.last].filter(Boolean).join(' ')) || 'Contact'}</strong>
+            <div class="m">${esc(p.job||'')}${p.job&&p.email?' · ':''}${esc(p.email||'')}${
+              p.primary?' <span class="tag brand">main contact</span>':''}</div></div>
+        </div>
+        <div class="bd">
+          <div class="roles">
+            ${ROLES.map(([v,l,h])=>`<button data-role="${i}:${v}" aria-pressed="${p.role===v}">
+              <span class="q">${l}</span><span class="h">${h}</span></button>`).join('')}
+          </div>
+
+          ${PERMISSIONS.map(([k,l,sub])=>`<div class="perm">
+            <div class="lbl">${l}${sub?`<div class="sub">${sub}</div>`:''}</div>
+            <div class="seg">
+              <button data-perm="${i}:${k}:1" aria-pressed="${!!p.perms[k]}">Yes</button>
+              <button data-perm="${i}:${k}:0" aria-pressed="${!p.perms[k]}">No</button>
+            </div>
+          </div>`).join('')}
+
+          ${p.perms.fees ? `<div style="margin-top:12px">
+            <label style="font-size:12px;color:var(--muted)">Spending authority</label>
+            <select data-spend="${i}" style="font:inherit;padding:9px 10px;border:1px solid var(--line);
+              border-radius:8px;margin-left:8px">
+              ${SPEND.map(([v,l])=>`<option value="${v}" ${p.spendBasis===v?'selected':''}>${l}</option>`).join('')}
+            </select>
+            ${p.spendBasis==='custom' ? `<input data-spendc="${i}" placeholder="£"
+              value="${esc(p.spendCustom)}" style="font:inherit;padding:9px 10px;width:120px;
+              border:1px solid var(--line);border-radius:8px;margin-left:8px">` : ''}
+          </div>` : ''}
+
+          ${S.records.length > 1 ? `<div style="margin-top:14px">
+            <label style="font-size:12px;color:var(--muted)">This authority applies to</label>
+            <select data-scope="${i}" style="font:inherit;padding:9px 10px;border:1px solid var(--line);
+              border-radius:8px;margin-left:8px">
+              <option value="all" ${p.scope==='all'?'selected':''}>All ${S.records.length} owner records</option>
+              ${S.records.map(r=>`<option value="${r.ipo_identifier}"
+                ${p.scope===String(r.ipo_identifier)?'selected':''}>Only ${esc(r.name)} (${r.ipo_identifier})</option>`).join('')}
+            </select>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ── 6. signatory ──────────────────────────────────────────────────── */
+function viewSignatory(){
+  const named = S.people.filter(p => (p.first||p.last) && p.email);
+  return `<div class="card">
+    <h2>Authorised signatory</h2>
+    <p class="lead">Who is authorised to formally appoint The Trademark Helpline and enter
+      into our agreement on behalf of ${esc(S.owner.name)}? This person signs the terms and
+      the standing Letter of Authority.</p>
+
+    <div class="rows">
+      ${named.map(p=>`<div class="row pick" data-sig="${p.key}"
+          ${S.signatory.contact_key===p.key?'style="background:var(--brand-tint)"':''}>
+        <input type="radio" ${S.signatory.contact_key===p.key?'checked':''} style="pointer-events:none">
+        <div class="main"><div class="t">${esc(p.first)} ${esc(p.last)}</div>
+          <div class="m">${esc(p.job||'')}${p.job?' · ':''}${esc(p.email)} ·
+            ${esc(ROLE_LABEL[p.role]||'')}</div></div>
+      </div>`).join('')}
+    </div>
+    ${!named.length ? '<div class="empty">Add someone with a name and an email first.</div>' : ''}
+
+    ${S.signatory.contact_key ? `
+      <h3>What is the basis of their authority?</h3>
+      <select id="sigBasis" style="font:inherit;padding:10px 12px;border:1px solid var(--line);
+        border-radius:8px;min-width:min(360px,100%)">
+        <option value="">Please choose…</option>
+        ${SIGNATORY_BASIS.map(([v,l])=>`<option value="${v}"
+          ${S.signatory.basis===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+
+      <div class="perm" style="margin-top:18px">
+        <div class="lbl">I confirm this individual has authority to appoint The Trademark
+          Helpline and enter into agreements relating to the trademark portfolio of
+          ${esc(S.owner.name)}.
+          <div class="sub">We may ask for evidence of this before the appointment takes effect.</div></div>
+        <div class="seg">
+          <button data-sigc="1" aria-pressed="${S.signatory.confirmed===true}">Yes</button>
+          <button data-sigc="0" aria-pressed="${S.signatory.confirmed===false}">Not yet</button>
+        </div>
+      </div>` : ''}
+  </div>`;
+}
+
+/* ── 7. review ─────────────────────────────────────────────────────── */
+function grantsFor(p){
+  const ids = p.scope === 'all'
+    ? S.records.map(r => r.ipo_identifier)
+    : [Number(p.scope)];
+  return ids.filter(Boolean);
+}
+
+function spendPence(p){
+  if (!p.perms.fees) return null;
+  if (p.spendBasis === 'none') return null;
+  if (p.spendBasis === 'custom')
+    return Math.round(parseFloat(String(p.spendCustom).replace(/[^0-9.]/g,'')) * 100) || null;
+  return Number(p.spendBasis) || null;
+}
+
+function viewReview(){
+  const named = S.people.filter(p => (p.first||p.last) && p.email);
+  const sig = S.people.find(p => p.key === S.signatory.contact_key);
+  const line = (k,v) => `<div class="f"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const money = p => {
+    const pence = spendPence(p);
+    if (!p.perms.fees) return '—';
+    return pence == null ? 'no limit set' : '£' + (pence/100).toLocaleString('en-GB');
+  };
+  return `<div class="card">
+    <h2>Check this over</h2>
+    <p class="lead">This is what we will act on. Nothing is filed and no agreement is in
+      force until the signatory has signed.</p>
+    <div class="facts">
+      ${line('Trademark owner', esc(S.owner.name))}
+      ${line('Owner details', {confirmed:'Confirmed as correct',
+                               changed:'Correction proposed — we will check it',
+                               unsure:'Client unsure — we will check it'}[S.ownerConfirmation] || '—')}
+      ${line('Portfolio', {confirmed:'Confirmed complete', missing:'Something missing — we will check',
+                           not_ours:'Something listed is not theirs — we will check',
+                           help:'Help requested'}[S.portfolioConfirmation] || '—')}
+      ${line('Trademarks', S.trademarks.length)}
+      ${line('People named', named.length)}
+      ${line('Signatory', sig ? esc(sig.first + ' ' + sig.last) : 'not chosen')}
+    </div>
+
+    <h3>Who can instruct what</h3>
+    <table class="tm">
+      <tr><th>Person</th><th>Role</th><th>Applies to</th><th>Fee limit</th><th>Portal</th></tr>
+      ${named.map(p=>`<tr>
+        <td><strong>${esc(p.first)} ${esc(p.last)}</strong>${p.primary?' <span class="tag brand">main</span>':''}
+          <div class="m">${esc(p.email)}</div></td>
+        <td>${esc(ROLE_LABEL[p.role]||'')}</td>
+        <td>${p.scope==='all' ? (S.records.length>1 ? `All ${S.records.length} records` : 'The owner')
+             : 'Applicant ' + esc(p.scope)}</td>
+        <td>${money(p)}</td>
+        <td>${p.portal==='none'?'—':esc(p.portal)}</td>
+      </tr>`).join('')}
+    </table>
+
+    <h3>What happens next</h3>
+    <ol class="next">
+      <li><strong>We check it.</strong> Anything you flagged goes to a person here, not
+        straight onto the register.</li>
+      <li><strong>The signatory signs.</strong> ${sig ? esc(sig.first+' '+sig.last) : 'Your signatory'}
+        receives our terms and the standing Letter of Authority to sign.</li>
+      <li><strong>Authority takes effect.</strong> Until then everything recorded here is a
+        claim awaiting evidence, and irreversible actions always need a fresh instruction.</li>
+    </ol>
+  </div>`;
+}
+
+/* ── validity ──────────────────────────────────────────────────────── */
+function valid(id){
+  if (id==='owner')     return !!S.owner && !!S.ownerConfirmation;
+  if (id==='portfolio') return !!S.portfolioConfirmation;
+  if (id==='primary'){
+    const p = S.people[0];
+    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.relationship;
+  }
+  if (id==='signatory') return !!S.signatory.contact_key && !!S.signatory.basis
+                             && S.signatory.confirmed === true;
+  return true;
+}
+
+/* ── snapshot ──────────────────────────────────────────────────────── */
+function snapshot(){
+  const named = S.people.filter(p => (p.first||p.last) && p.email);
+  const grants = [];
+  named.forEach(p => grantsFor(p).forEach(ipo => {
+    const rec = S.records.find(r => String(r.ipo_identifier) === String(ipo)) || {};
+    grants.push({
+      applicant_identifier: ipo, applicant_name: rec.name || S.owner.name,
+      contact_key: p.email.trim().toLowerCase(),
+      first_name: p.first, last_name: p.last, job_title: p.job,
+      email: p.email, phone: p.phone, relationship_to_owner: p.relationship,
+      role: p.role,
+      // the permissions this role meant today, not a pointer to the role
+      permissions: {...p.perms},
+      spending_limit_pence: spendPence(p),
+      spending_limit_basis: p.perms.fees ? (p.spendBasis==='none'?'none':
+                             p.spendBasis==='custom'?'custom':'capped') : null,
+      is_primary_contact: !!p.primary,
+      is_billing_contact: S.billing.mode==='primary' ? !!p.primary
+                          : (S.billing.email||'').trim().toLowerCase() === p.email.trim().toLowerCase(),
+      portal_access: p.portal,
+    });
+  }));
+
+  const tasks = [];
+  if (S.ownerConfirmation && S.ownerConfirmation !== 'confirmed')
+    tasks.push({ kind:'owner_details', severity:'high',
+                 detail:{ answer:S.ownerConfirmation, proposed:S.ownerCorrection,
+                          on_record:{ name:S.owner.name, company_number:S.owner.company_number,
+                                      address:S.owner.address } } });
+  if (S.portfolioConfirmation && S.portfolioConfirmation !== 'confirmed')
+    tasks.push({ kind:'portfolio', severity: S.portfolioConfirmation==='not_ours'?'high':'normal',
+                 detail:{ answer:S.portfolioConfirmation, note:S.portfolioNote } });
+  const joint = S.trademarks.filter(m => m.jointly_owned);
+  if (joint.length)
+    tasks.push({ kind:'joint_owner', severity:'high',
+                 detail:{ count:joint.length,
+                          marks: joint.map(m => ({ application_number:m.application_number,
+                                                   applicants:m.applicants })) } });
+  const sensitive = named.filter(p => p.perms.ownership_sensitive);
+  if (sensitive.length)
+    tasks.push({ kind:'sensitive', severity:'high',
+                 detail:{ people: sensitive.map(p => ({ name:p.first+' '+p.last, email:p.email,
+                                                        role:p.role })) } });
+  if (S.signatory.basis && !['director','proprietor','partner'].includes(S.signatory.basis))
+    tasks.push({ kind:'signatory', severity:'normal',
+                 detail:{ basis:S.signatory.basis, contact_key:S.signatory.contact_key } });
+
+  return {
+    owner: S.owner, records: S.records,
+    owner_confirmation: S.ownerConfirmation, owner_correction: S.ownerCorrection,
+    portfolio_confirmation: S.portfolioConfirmation, portfolio_note: S.portfolioNote,
+    trademarks: S.trademarks.map(m => ({ application_number:m.application_number,
+      mark_text:m.mark_text, status:m.status, tmh_representative:m.tmh_representative,
+      jointly_owned:!!m.jointly_owned, applicants:m.applicants || [] })),
+    people: named, billing: S.billing, signatory: S.signatory,
+    authority_grants: grants, review_tasks: tasks,
+    lookup_evidence: EVIDENCE,
+  };
+}
+
+async function save(){
+  S.version += 1;
+  const st = snapshot();
+  const body = { submission_id:S.submissionId, version:S.version, state:st,
+    input: {
+      owner_group_key: S.owner ? S.owner.group_key : null,
+      owner_name: S.owner ? S.owner.name : null,
+      contact_email: (S.people[0]||{}).email || null,
+      owner_confirmation: S.ownerConfirmation,
+      portfolio_confirmation: S.portfolioConfirmation,
+    } };
+  try{
+    const r = await fetch(API + '/api/questionnaire', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    const d = await r.json();
+    S.submissionId = S.submissionId || d.submission_id;
+    $('#saved').textContent = 'Saved';
+    setTimeout(()=>{ $('#saved').textContent=''; }, 1800);
+  }catch(e){ $('#saved').textContent=''; }
+}
+
+/* ── render ────────────────────────────────────────────────────────── */
+function render(){
+  at = Math.min(at, STEPS.length-1);
+  $('#progress').innerHTML = STEPS.map((s,i)=>
+    `<div class="${i<at?'done':i===at?'now':''}" title="${s[1]}"></div>`).join('');
+  const id = STEPS[at][0];
+  $('#stage').innerHTML = {
+    owner: viewOwner, portfolio: viewPortfolio, primary: viewPrimary,
+    others: viewOthers, authority: viewAuthority, signatory: viewSignatory,
+    review: viewReview,
+  }[id]();
+  $('#back').style.visibility = at ? 'visible' : 'hidden';
+  $('#next').textContent = id==='review' ? 'Submit' : 'Continue';
+  $('#next').disabled = !valid(id);
+  wire(id);
+}
+
+function wire(id){
+  // finder, when no link brought them here
+  if ($('#ownGo')){
+    const go = async () => {
+      const q = $('#ownQ').value.trim(); if (q.length<2) return;
+      $('#ownResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
+      const d = await api(`/api/search/applicant?q=${encodeURIComponent(q)}`);
+      $('#ownResults').innerHTML = (d.results||[]).length
+        ? `<div class="rows">${d.results.map(a=>`<div class="row pick" data-own="${a.ipo_identifier}">
+            <div class="main"><div class="t">${esc(a.name)}</div>
+              <div class="m">Applicant ${a.ipo_identifier} · ${a.trademark_count} trademarks${
+                a.postcode?' · '+esc(a.postcode):''}</div></div>
+            <div class="act"><button class="ghost">This is us</button></div></div>`).join('')}</div>`
+        : '<div class="none">Nothing found under that name.</div>';
+      $$('[data-own]').forEach(r => r.onclick = () => loadOwner(r.dataset.own));
+    };
+    $('#ownGo').onclick = go;
+    $('#ownQ').onkeydown = e => { if (e.key==='Enter') go(); };
+  }
+
+  $$('[data-oc]').forEach(b => b.onclick = () => {
+    S.ownerConfirmation = b.dataset.oc; render(); });
+  $$('[data-corr]').forEach(el => el.oninput = () => {
+    S.ownerCorrection[el.dataset.corr] = el.value; $('#next').disabled = !valid(STEPS[at][0]); });
+  $$('[data-pc]').forEach(b => b.onclick = () => {
+    S.portfolioConfirmation = b.dataset.pc; render(); });
+  if ($('#pfNote')) $('#pfNote').oninput = e => { S.portfolioNote = e.target.value; };
+
+  $$('[data-p]').forEach(el => el.oninput = el.onchange = () => {
+    const [i,f] = el.dataset.p.split(':');
+    S.people[+i][f] = el.value;
+    $('#next').disabled = !valid(STEPS[at][0]);
+  });
+  $$('[data-portal]').forEach(b => b.onclick = () => {
+    const [i,v] = b.dataset.portal.split(':'); S.people[+i].portal = v; render(); });
+  $$('[data-drop]').forEach(b => b.onclick = () => {
+    S.people.splice(+b.dataset.drop,1); render(); });
+  if ($('#addPerson')) $('#addPerson').onclick = () => { S.people.push(blankPerson(false)); render(); };
+
+  $$('[data-bill]').forEach(b => b.onclick = () => { S.billing.mode = b.dataset.bill; render(); });
+  $$('[data-b]').forEach(el => el.oninput = () => { S.billing[el.dataset.b] = el.value; });
+  $$('[data-po]').forEach(b => b.onclick = () => { S.billing.po = b.dataset.po==='yes'; render(); });
+
+  $$('[data-role]').forEach(b => b.onclick = () => {
+    const [i,v] = b.dataset.role.split(':');
+    S.people[+i].role = v;
+    S.people[+i].perms = roleDefaults(v);   // preset resets, then they adjust
+    render();
+  });
+  $$('[data-perm]').forEach(b => b.onclick = () => {
+    const [i,k,v] = b.dataset.perm.split(':');
+    S.people[+i].perms[k] = v==='1';
+    render();
+  });
+  $$('[data-spend]').forEach(s => s.onchange = () => {
+    S.people[+s.dataset.spend].spendBasis = s.value; render(); });
+  $$('[data-spendc]').forEach(el => el.oninput = () => {
+    S.people[+el.dataset.spendc].spendCustom = el.value; });
+  $$('[data-scope]').forEach(s => s.onchange = () => {
+    S.people[+s.dataset.scope].scope = s.value; });
+
+  $$('[data-sig]').forEach(r => r.onclick = () => {
+    S.signatory.contact_key = r.dataset.sig; render(); });
+  if ($('#sigBasis')) $('#sigBasis').onchange = e => {
+    S.signatory.basis = e.target.value; render(); };
+  $$('[data-sigc]').forEach(b => b.onclick = () => {
+    S.signatory.confirmed = b.dataset.sigc==='1'; render(); });
+}
+
+/* ── navigation ────────────────────────────────────────────────────── */
+$('#next').onclick = async () => {
+  await save();
+  if (STEPS[at][0] === 'review'){
+    const sig = S.people.find(p => p.key === S.signatory.contact_key) || {};
+    $('#stage').innerHTML = `<div class="card done-head">
+        <h2>Thank you — that is everything we needed</h2>
+        <p class="lead">Reference <strong>${esc((S.submissionId||'').slice(0,8).toUpperCase())}</strong>.
+          We are checking what you have told us.</p>
+      </div>
+      <div class="card"><h2>What happens next</h2>
+        <ol class="next">
+          <li><strong>We review your answers.</strong> Usually within one working day.</li>
+          <li><strong>${esc([sig.first,sig.last].filter(Boolean).join(' ') || 'Your signatory')}
+            receives the agreement.</strong> Our terms and the standing Letter of Authority,
+            to sign electronically.</li>
+          <li><strong>Then your authority takes effect</strong> and we set up portal access
+            for anyone you have named.</li>
+        </ol>
+        <p class="hint" style="margin-bottom:0">Questions? Call us on
+          <a href="tel:+441618335400">+44 161 833 5400</a> quoting your reference.</p>
+      </div>`;
+    $('#next').style.display='none'; $('#back').style.display='none';
+    $('#progress').style.display='none';
+    window.scrollTo(0,0);
+    return;
+  }
+  at++; render();
+};
+$('#back').onclick = () => { if (at) { at--; render(); } };
+
+window.BUILD = 'build 12 Aug 06:50';
+if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
+
+const startFrom = new URLSearchParams(location.search).get('applicant');
+if (startFrom) loadOwner(startFrom); else render();
+
+</script>
+</body>
+</html>
