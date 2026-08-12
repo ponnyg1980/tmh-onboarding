@@ -747,9 +747,11 @@ async function showOfficers(number, W, all){
     const o  = rows.find(x => String(x.officer_id) === String(id)) || {};
     const d2 = await api(`/api/officer/${id}/companies`);
     panel.innerHTML = officerCompaniesHtml(d2);
-    wireOfficerCompanies(panel, W, {source:'officer_of_company', officer_id:id,
+    const via = {source:'officer_of_company', officer_id:id,
       officer_name: d2.officer_name || o.name, person_number: o.person_number,
-      found_via_company: number});
+      found_via_company: number};
+    wireOfficerCompanies(panel, W, via);
+    offerOtherRecords(panel, W, via);
   });
 }
 
@@ -874,6 +876,56 @@ function officerCompaniesHtml(d){
     <button class="ghost" data-add-officer-cos="1">Add selected companies</button>`;
 }
 
+/* Companies House files the same person more than once — a new officer record
+   appears whenever the name or address is entered differently. Ten records for
+   one person is not unusual. Without this, "find all my companies" quietly
+   returns a third of them. */
+async function offerOtherRecords(root, W, via){
+  if (!via || !via.officer_id) return;
+  let d;
+  try { d = await api(`/api/officer/${via.officer_id}/others`); } catch(e){ return; }
+  const r = (d.results || []).filter(x => (x.appointment_count || 0) > 0);
+  if (!r.length) return;
+
+  const total = r.reduce((n,x)=>n+(x.appointment_count||0),0);
+  const box = document.createElement('div');
+  box.className = 'card';
+  box.style.cssText = 'background:var(--warn-tint);border-color:transparent;margin-bottom:14px';
+  box.innerHTML = `
+    <div class="t">You appear on the register ${r.length} more time${r.length===1?'':'s'}</div>
+    <p class="m" style="margin:4px 0 12px">Companies House does not link a person's
+      records together. These share your date of birth (${esc(d.date_of_birth||'')}) and name,
+      and hold ${total} more appointment${total===1?'':'s'} between them. Add any that are you.</p>
+    <div class="rows" style="margin-bottom:0">
+      ${r.map(o=>`<div class="row">
+        <div class="main">
+          <div class="t">${esc(o.name)}</div>
+          <div class="m">${o.appointment_count} appointment${o.appointment_count===1?'':'s'}${
+            o.locality ? ' · '+esc(o.locality) : ''}</div>
+        </div>
+        <div class="act"><button class="ghost" data-add-other="${esc(o.officer_id)}"
+          data-add-name="${esc(o.name)}">Add these</button></div>
+      </div>`).join('')}
+    </div>`;
+  root.prepend(box);
+
+  box.querySelectorAll('[data-add-other]').forEach(b => b.onclick = async () => {
+    b.disabled = true; b.textContent = 'Adding…';
+    const id = b.dataset.addOther;
+    const d2 = await api(`/api/officer/${id}/companies`);
+    const list = W ? S.watch.companies : S.companies;
+    (d2.results || []).filter(c => c.is_current && c.company_status === 'active')
+      .forEach(c => {
+        if (!list.some(x => x.company_number === c.company_number))
+          list.push({...c, include:true, relationship: W?'competitor':undefined,
+                     via:{source:'officer_other_record', officer_id:id,
+                          officer_name:b.dataset.addName,
+                          merged_from:via.officer_id}});
+      });
+    render();
+  });
+}
+
 function wireOfficerCompanies(root, W, via){
   const btn = root.querySelector('[data-add-officer-cos]');
   if (!btn) return;
@@ -905,8 +957,9 @@ function wireCoResults(W){
     const id = row.dataset.pickOfficer;
     const d  = await api(`/api/officer/${id}/companies`);
     $('#coResults').innerHTML = officerCompaniesHtml(d);
-    wireOfficerCompanies($('#coResults'), W, {source:'officer_search',
-      officer_id:id, officer_name:d.officer_name});
+    const via = {source:'officer_search', officer_id:id, officer_name:d.officer_name};
+    wireOfficerCompanies($('#coResults'), W, via);
+    offerOtherRecords($('#coResults'), W, via);
   });
 }
 
@@ -928,7 +981,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 02:24';
+window.BUILD = 'build 12 Aug 03:16';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
