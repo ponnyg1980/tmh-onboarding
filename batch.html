@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Client batches — The Trademark Helpline</title>
+<style>
+  :root{
+    --ink:#14161a; --muted:#6b7280; --line:#e4e6ea; --bg:#f7f8fa; --card:#fff;
+    --brand:#c81b5b; --brand-tint:#fdeef4;
+    --ok:#0f7b4f; --ok-tint:#e8f5ee; --warn:#8a5a00; --warn-tint:#fdf3e0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  h1{font-size:21px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:20px;margin-bottom:14px}
+  input{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;
+        min-width:min(420px,100%)}
+  button{font:inherit;background:var(--brand);color:#fff;border:0;border-radius:8px;
+         padding:11px 22px;font-weight:600;cursor:pointer}
+  button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);
+               padding:6px 12px;font-weight:400;font-size:13px}
+  .sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:14px}
+  .sum b{color:var(--ink);font-size:19px;font-weight:600;display:block}
+  .s{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:12px;
+     overflow:hidden}
+  .s>.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+         padding:14px 16px;cursor:pointer}
+  .s>.hd:hover{background:#fcfcfd}
+  .t{font-weight:600}
+  .m{color:var(--muted);font-size:13px;margin-top:2px}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;
+       border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .tag.ok{background:var(--ok-tint);color:var(--ok);border-color:transparent}
+  .tag.warn{background:var(--warn-tint);color:var(--warn);border-color:transparent}
+  .tag.brand{background:var(--brand-tint);color:var(--brand);border-color:transparent}
+  .body{border-top:1px solid var(--line);padding:16px;display:none;background:#fcfcfd}
+  .s.open .body{display:block}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+     margin:16px 0 8px}
+  h3:first-child{margin-top:0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td,th{text-align:left;padding:6px 10px 6px 0;vertical-align:top}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  tr+tr td{border-top:1px solid var(--line)}
+  code{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+  .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+  .none{color:var(--muted);padding:22px;text-align:center}
+  details summary{cursor:pointer;color:var(--brand);font-size:13px}
+  pre{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;
+      overflow:auto;font-size:12px;max-height:340px}
+
+  .bat{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:10px;overflow:hidden}
+  .bat>.hd{display:flex;justify-content:space-between;align-items:center;gap:14px;
+       padding:14px 16px;cursor:pointer}
+  .bat>.hd:hover{background:#fcfcfd}
+  .bat.open>.hd{border-bottom:1px solid var(--line)}
+  .bar{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--line);
+       width:220px;flex:none}
+  .bar i{display:block}
+  .bar .r{background:var(--line)} .bar .s{background:#c9a227}
+  .bar .o{background:var(--brand)} .bar .d{background:var(--ok)}
+  .bat .body{display:none;padding:0} .bat.open .body{display:block}
+  table.cl{width:100%;border-collapse:collapse;font-size:13px}
+  table.cl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+       color:var(--muted);font-weight:500;padding:10px 10px 8px}
+  table.cl td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+  table.cl tr:hover td{background:#fcfcfd}
+  .pill{font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .pill.ready{background:#f1f2f4;color:var(--muted)}
+  .pill.sent{background:#fdf3e0;color:var(--warn)}
+  .pill.opened{background:var(--brand-tint);color:var(--brand)}
+  .pill.submitted{background:var(--ok-tint);color:var(--ok)}
+  .pill.excluded{background:#fdecec;color:#a11}
+  .mini{border:0;background:none;color:var(--brand);font:inherit;font-size:12px;cursor:pointer;
+        padding:0;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Client batches</h1>
+    <span class="sub">Compliance questionnaire — outreach worklist</span>
+    <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
+  </header>
+
+  <div class="card" id="gate">
+    <p style="margin-top:0">These records contain client names, emails and phone numbers.
+      Paste the access token to continue.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input id="tok" type="password" placeholder="tmh_…" autocomplete="off">
+      <button id="go">View</button>
+    </div>
+    <p class="sub" style="margin-bottom:0">Held for this browser tab only, never stored.</p>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+const FORM = location.origin + location.pathname.replace(/[^/]*$/, 'existing.html');
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const date = s => s ? new Date(s).toLocaleDateString('en-GB',
+  {day:'numeric',month:'short'}) : '';
+
+let TOKEN = '', DATA = null;
+
+async function load(token){
+  $('#out').innerHTML = '<div class="none">Loading…</div>';
+  let d;
+  try{
+    const r = await fetch(API + '/api/admin/batches', {headers:{'x-admin-token':token}});
+    d = await r.json();
+  }catch(e){ d = {error:'could not reach the API'}; }
+
+  if (d.error){
+    $('#out').innerHTML = `<div class="err">${d.error === 'unauthorised'
+      ? 'That token was not accepted.' : esc(d.error)}</div>`;
+    return;
+  }
+  TOKEN = token; DATA = d;
+  sessionStorage.setItem('tmh_admin_token', token);
+  $('#gate').style.display = 'none';
+  render();
+}
+
+function render(){
+  const batches = DATA.batches || [], clients = DATA.clients || [];
+  const sum = k => batches.reduce((n,b)=>n+(b[k]||0),0);
+
+  $('#out').innerHTML = `
+    <div class="sum">
+      <div><b>${sum('total')}</b> clients with 3 marks or fewer</div>
+      <div><b>${sum('ready') + sum('sent') + sum('opened')}</b> to work through</div>
+      <div><b>${sum('submitted')}</b> completed</div>
+      <div><b>${sum('excluded')}</b> need enriching first</div>
+    </div>
+    ${batches.map(b => batchCard(b, clients.filter(c => c.batch === b.batch))).join('')}`;
+
+  $$('.bat > .hd').forEach(h => h.onclick = () => h.parentElement.classList.toggle('open'));
+  $$('[data-copy]').forEach(b => b.onclick = async (e) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(FORM + '?seed=' + b.dataset.copy);
+    b.textContent = 'copied';
+    setTimeout(()=>{ b.textContent = 'copy link'; }, 1500);
+  });
+  $$('[data-sent]').forEach(b => b.onclick = async (e) => {
+    e.stopPropagation();
+    b.disabled = true;
+    await fetch(API + '/api/admin/seed-sent', {method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+      body: JSON.stringify({seed_token: b.dataset.sent})});
+    load(TOKEN);
+  });
+}
+
+function batchCard(b, clients){
+  const live = b.ready + b.sent + b.opened;
+  const w = n => (b.total ? (n / b.total * 100) : 0) + '%';
+  return `<div class="bat">
+    <div class="hd">
+      <div>
+        <div class="t">${esc(b.batch)}</div>
+        <div class="m">${b.total} clients · ${b.with_email} with an email${
+          b.excluded ? ` · ${b.excluded} need enriching` : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="m" style="white-space:nowrap">${b.submitted} of ${live || 0} done</div>
+        <div class="bar">
+          <i class="d" style="width:${w(b.submitted)}"></i>
+          <i class="o" style="width:${w(b.opened)}"></i>
+          <i class="s" style="width:${w(b.sent)}"></i>
+          <i class="r" style="width:${w(b.ready)}"></i>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <table class="cl">
+        <tr><th>Client</th><th>Contact</th><th>Marks</th><th>Most urgent</th>
+            <th>Status</th><th></th></tr>
+        ${clients.map(c=>`<tr>
+          <td><strong>${esc(c.zoho_account || '—')}</strong>${
+            c.applicant_records > 1
+              ? `<div class="m">${c.applicant_records} applicant records</div>` : ''}</td>
+          <td>${esc([c.first_name,c.last_name].filter(Boolean).join(' ')) || '—'}
+            <div class="m">${esc(c.email || c.phone || 'no contact details')}</div></td>
+          <td>${c.marks || 0}${c.live_marks != null
+            ? `<div class="m">${c.live_marks} live</div>` : ''}</td>
+          <td>${c.urgent_number ? `${esc(c.urgent_mark || '')}
+            <div class="m">${esc(c.urgent_number)}${
+              c.urgent_expiry ? ' · ' + date(c.urgent_expiry) : ''}</div>` : '—'}</td>
+          <td><span class="pill ${c.status}">${c.status}</span>${
+            c.exclude_reason ? `<div class="m">${esc(c.exclude_reason)}</div>` : ''}${
+            c.submitted_at ? `<div class="m">${date(c.submitted_at)}</div>` : ''}</td>
+          <td style="white-space:nowrap">${c.status === 'excluded' ? '' : `
+            <a class="mini" href="${FORM}?seed=${esc(c.seed_token)}" target="_blank">open</a>
+            &nbsp;<button class="mini" data-copy="${esc(c.seed_token)}">copy link</button>${
+            c.status === 'ready' ? `&nbsp;<button class="mini" data-sent="${esc(c.seed_token)}">mark sent</button>` : ''}`}
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  </div>`;
+}
+
+$('#go').onclick = () => load($('#tok').value.trim());
+$('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
+
+window.BUILD = 'build 12 Aug 07:31';
+if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
+
+const saved = sessionStorage.getItem('tmh_admin_token');
+if (saved) load(saved);
+</script>
+</body>
+</html>
