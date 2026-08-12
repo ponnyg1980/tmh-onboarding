@@ -328,7 +328,8 @@ function viewTrademarks(mode){
       <button id="tmGo">Search</button>
     </div>
     <p class="hint">Not sure? Search the brand name as it appears on the register.</p>
-    <div id="tmResults"></div>
+    <div id="tmResults">${tmSearch && tmSearch.W===W
+        ? renderTmResults(tmSearch.data, tmSearch.mode, W) : ''}</div>
     ${list.length ? `<h3>${W?'Watching':'In your portfolio'}</h3>` : ''}
     <div id="tmChosen">${list.map((a,i)=>applicantCard(a,i,W)).join('')}</div>
     ${!list.length ? `<div class="empty">Nothing added yet. Search above to begin.</div>` : ''}
@@ -400,7 +401,7 @@ function viewCompanies(mode){
       <button id="coGo">Search</button>
     </div>
     <p class="hint">Searching by name finds every company where you're listed as an officer.</p>
-    <div id="coResults"></div>
+    <div id="coResults">${coSearch && coSearch.W===W ? coResultsHtml(W) : ''}</div>
     ${list.length ? `<h3>${W?'Watching':'In your portfolio'}</h3>` : ''}
     <div id="coChosen">
       ${list.map((c,i)=>`
@@ -612,6 +613,14 @@ function render(){
   wire(id);
 }
 
+/* A search result list must survive adding something from it. Selecting an
+   officer used to replace the list with that person's companies, so picking a
+   second record meant searching again — while the hint told you that you could
+   pick more than one. Held here so render() can put it back. */
+let tmSearch = null;   // {W, mode, data, q}
+let coSearch = null;   // {W, mode, results, q}
+let coOpen   = null;   // {officer_id, data} — the expanded officer, if any
+
 let watchTab = 'trademarks';
 function viewWatch(){
   return `<div class="card" style="padding-bottom:6px">
@@ -654,12 +663,13 @@ function wire(id){
       $('#tmResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
       try{
         const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
-        $('#tmResults').innerHTML = renderTmResults(d, mode, W);
-        wireTmResults(W);
+        tmSearch = { W, mode, q, data: d };
+        render();
       }catch(e){ $('#tmResults').innerHTML = '<div class="err">Search unavailable. Try again.</div>'; }
     };
     $('#tmGo').onclick = go;
     $('#tmQ').onkeydown = e => { if (e.key==='Enter') go(); };
+    if (tmSearch && tmSearch.W===W) { $('#tmQ').value = tmSearch.q; wireTmResults(W); }
     bindChosen(W);
   }
 
@@ -671,13 +681,16 @@ function wire(id){
       $('#coResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
       try{
         const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
-        $('#coResults').innerHTML = mode==='company'
-          ? renderCoResults(d.results, W) : renderOfficerResults(d.results);
-        wireCoResults(W);
+        coSearch = { W, mode, q, results: d.results || [] };
+        coOpen = null;
+        render();
       }catch(e){ $('#coResults').innerHTML = '<div class="err">Search unavailable. Try again.</div>'; }
     };
     $('#coGo').onclick = go;
     $('#coQ').onkeydown = e => { if (e.key==='Enter') go(); };
+    if (coSearch && coSearch.W===W) { $('#coQ').value = coSearch.q;
+                                      $('#coMode').value = coSearch.mode; }
+    wireCoResults(W);
     bindChosen(W);
   }
 
@@ -817,11 +830,22 @@ function renderTmResults(d, mode, W){
 }
 
 function wireTmResults(W){
-  $('#stage').querySelectorAll('[data-pick-app]').forEach(row => row.onclick = async () => {
-    const ipo = row.dataset.pickApp; if (!ipo) return;
-    row.style.opacity = .5;
-    await addApplicant(ipo, W);
-    render();
+  const list = W ? S.watch.applicants : S.applicants;
+  $('#stage').querySelectorAll('[data-pick-app]').forEach(row => {
+    const ipo = row.dataset.pickApp;
+    if (list.some(a => String(a.ipo) === String(ipo))) {
+      // already in the portfolio: say so rather than letting them add it twice
+      row.style.opacity = .55;
+      const b = row.querySelector('.act button');
+      if (b) { b.textContent = 'Added'; b.disabled = true; }
+      return;
+    }
+    row.onclick = async () => {
+      if (!ipo) return;
+      row.style.opacity = .5;
+      await addApplicant(ipo, W);
+      render();
+    };
   });
 }
 
@@ -863,16 +887,28 @@ function renderCoResults(r, W){
     </div>`).join('')}</div>`;
 }
 
+function coResultsHtml(W){
+  if (!coSearch) return '';
+  return coSearch.mode === 'company'
+    ? renderCoResults(coSearch.results, W)
+    : renderOfficerResults(coSearch.results);
+}
+
 function renderOfficerResults(r){
   if (!r.length) return `<div class="none">No one found with that name.</div>`;
-  return `<div class="rows">${r.slice(0,12).map(o=>`
-    <div class="row pick" data-pick-officer="${esc(o.officer_id)}">
+  return `<div class="rows">${r.slice(0,12).map(o=>{
+    const open = coOpen && String(coOpen.officer_id) === String(o.officer_id);
+    return `<div class="row pick" data-pick-officer="${esc(o.officer_id)}"
+        ${open?'style="background:var(--brand-tint)"':''}>
       <div class="main">
         <div class="t">${esc(o.name)}</div>
         <div class="m">${esc(o.description||'')}${o.locality?' · '+esc(o.locality):''}</div>
       </div>
-      <div class="act"><button class="ghost">See companies</button></div>
-    </div>`).join('')}</div>
+      <div class="act"><button class="ghost">${open?'Hide':'See companies'}</button></div>
+    </div>
+    ${open ? `<div data-officer-panel="${esc(o.officer_id)}"
+        style="padding:0 14px 14px">${officerCompaniesHtml(coOpen.data)}</div>` : ''}`;
+  }).join('')}</div>
     <p class="hint">Several people can share a name — check the location and date of birth
       before selecting. You can pick more than one if you appear more than once.</p>`;
 }
@@ -1002,15 +1038,26 @@ function wireCoResults(W){
       list.push({...c, include:true, relationship: W?'competitor':undefined});
     render();
   });
-  $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async () => {
-    row.style.opacity = .5;
+  $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async (e) => {
+    if (e.target.closest('[data-officer-panel]')) return;   // clicks inside the panel
     const id = row.dataset.pickOfficer;
-    const d  = await api(`/api/officer/${id}/companies`);
-    $('#coResults').innerHTML = officerCompaniesHtml(d);
-    const via = {source:'officer_search', officer_id:id, officer_name:d.officer_name};
-    wireOfficerCompanies($('#coResults'), W, via);
-    offerOtherRecords($('#coResults'), W, via);
+    if (coOpen && String(coOpen.officer_id) === String(id)) { coOpen = null; render(); return; }
+    row.style.opacity = .5;
+    const d = await api(`/api/officer/${id}/companies`);
+    coOpen = { officer_id: id, data: d };
+    render();
   });
+
+  // the expanded officer's companies, redrawn with everything else
+  if (coOpen) {
+    const panel = $(`[data-officer-panel="${coOpen.officer_id}"]`);
+    if (panel) {
+      const via = {source:'officer_search', officer_id: coOpen.officer_id,
+                   officer_name: coOpen.data.officer_name};
+      wireOfficerCompanies(panel, W, via);
+      offerOtherRecords(panel, W, via);
+    }
+  }
 }
 
 /* ── navigation ────────────────────────────────────────────────────── */
@@ -1031,7 +1078,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 03:56';
+window.BUILD = 'build 12 Aug 04:16';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
