@@ -343,9 +343,8 @@ function viewFinder(){
 /* ── 1. the owner ──────────────────────────────────────────────────── */
 function viewOwner(){
   if (!S.owner) return viewFinder();
-  const o = S.owner, a = o.address || {};
-  const addr = [a.address_line, a.locality, a.region, a.postcode, a.country]
-    .filter(Boolean).join(', ');
+  const o = S.owner;
+  const addr = o.address_text || '';
   const yn = (v,l,h) => `<button data-oc="${v}" aria-pressed="${S.ownerConfirmation===v}">
       <span class="q">${l}</span><span class="h">${h}</span></button>`;
 
@@ -358,7 +357,10 @@ function viewOwner(){
     <div class="facts">
       <div class="f"><span class="k">Owner on the register</span><span class="v">${esc(o.name)}</span></div>
       ${o.company_number ? `<div class="f"><span class="k">Company number</span>
-        <span class="v">${esc(o.company_number)}</span></div>` : ''}
+        <span class="v">${esc(o.company_number)}${
+          o.company_number_source && o.company_number_source !== 'temmy'
+            ? ' <span class="tag warn">matched at Companies House, not on the IPO record</span>'
+            : ''}</span></div>` : ''}
       ${addr ? `<div class="f"><span class="k">Address</span><span class="v">${esc(addr)}</span></div>` : ''}
       <div class="f"><span class="k">Records held</span><span class="v">${S.records.length}</span></div>
     </div>
@@ -371,8 +373,7 @@ function viewOwner(){
         ${S.records.map(r=>`<div class="row">
           <div class="main"><div class="t">${esc(r.name)}</div>
             <div class="m">Applicant ${r.ipo_identifier} · ${r.trademark_count} trademarks${
-              r.postcode ? ' · '+esc(r.postcode) : ''}${
-              r.same_address ? '' : ' · different address on file'}</div></div>
+              r.address_text ? ' · '+esc(r.address_text) : ''}</div></div>
         </div>`).join('')}
       </div></div>` : ''}
 
@@ -918,7 +919,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 12 Aug 06:50';
+window.BUILD = 'build 12 Aug 06:53';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const startFrom = new URLSearchParams(location.search).get('applicant');
