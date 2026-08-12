@@ -619,8 +619,7 @@ function render(){
    pick more than one. Held here so render() can put it back. */
 let tmSearch = null;   // {W, mode, data, q}
 let coSearch = null;   // {W, mode, results, q}
-let coOpen   = null;   // {officer_id, data} — the expanded officer, if any
-let otherOpen = null;  // {officer_id, data} — an expanded *other* record of that person
+let coOpen   = {};     // officer_id -> {data, added, taken[]} — several may be open
 
 let watchTab = 'trademarks';
 function viewWatch(){
@@ -683,7 +682,7 @@ function wire(id){
       try{
         const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
         coSearch = { W, mode, q, results: d.results || [] };
-        coOpen = null;
+        coOpen = {};
         render();
       }catch(e){ $('#coResults').innerHTML = '<div class="err">Search unavailable. Try again.</div>'; }
     };
@@ -792,12 +791,21 @@ async function showOfficers(number, W, all){
     const id = row.dataset.officerPick;
     const o  = rows.find(x => String(x.officer_id) === String(id)) || {};
     const d2 = await api(`/api/officer/${id}/companies`);
-    panel.innerHTML = officerCompaniesHtml(d2);
-    const via = {source:'officer_of_company', officer_id:id,
-      officer_name: d2.officer_name || o.name, person_number: o.person_number,
-      found_via_company: number};
-    wireOfficerCompanies(panel, W, via);
-    offerOtherRecords(panel, W, via);
+
+    /* Hand off to the one list of people at the top of the step, rather than
+       running a second, subtly different version of it down here. The officer
+       list of a company is how you *find* the person; everything after that —
+       their companies, their other records — happens in one place. */
+    coSearch = { W, mode:'officer', q: o.name || '',
+                 results: [{ officer_id:id, name: d2.officer_name || o.name,
+                             appointment_count: (d2.results||[]).length,
+                             locality: o.locality || '',
+                             description: `Found on ${number}` }] };
+    coOpen = { [id]: { data:d2, added:false, taken:[] } };
+    panel.dataset.open = '';
+    render();
+    mergeOtherRecords(id);
+    $('#coResults')?.scrollIntoView?.({behavior:'smooth', block:'start'});
   });
 }
 
@@ -895,23 +903,50 @@ function coResultsHtml(W){
     : renderOfficerResults(coSearch.results);
 }
 
+/* One list of people, not two. Every record that might be this person appears
+   here — the ones Companies House search returned, plus any matched afterwards
+   on date of birth. Each expands in place, several at a time, so someone with
+   ten records can work down the list instead of starting again after each. */
 function renderOfficerResults(r){
   if (!r.length) return `<div class="none">No one found with that name.</div>`;
-  return `<div class="rows">${r.slice(0,12).map(o=>{
-    const open = coOpen && String(coOpen.officer_id) === String(o.officer_id);
-    return `<div class="row pick" data-pick-officer="${esc(o.officer_id)}"
-        ${open?'style="background:var(--brand-tint)"':''}>
-      <div class="main">
-        <div class="t">${esc(o.name)}</div>
-        <div class="m">${esc(o.description||'')}${o.locality?' · '+esc(o.locality):''}</div>
+
+  const merged = r.filter(o => o.also_you).length;
+  return `${merged ? `<div class="card" data-other-records="1"
+      style="background:var(--warn-tint);border-color:transparent;padding:16px;margin-bottom:12px">
+      <div class="t">${merged} more record${merged===1?'':'s'} share your date of birth</div>
+      <p class="m" style="margin:4px 0 0">Companies House does not link a person's
+        records together, so the same person is filed more than once. They are marked
+        <span class="tag warn">likely you</span> below.</p>
+    </div>` : ''}
+
+    <div class="rows">${r.map(o=>{
+      const open  = coOpen[o.officer_id];
+      const added = open && open.added;
+      return `<div class="row pick" data-pick-officer="${esc(o.officer_id)}"
+          ${open?'style="background:var(--brand-tint)"':''}>
+        <div class="main">
+          <div class="t">${esc(o.name)}
+            ${o.also_you?'<span class="tag warn">likely you</span>':''}
+            ${added?'<span class="tag ok">added</span>':''}</div>
+          <div class="m">${esc(o.description || (
+            (o.appointment_count!=null ? o.appointment_count+' appointment'+(o.appointment_count===1?'':'s') : '')
+            + (o.date_of_birth ? ' · born '+esc(o.date_of_birth) : '')))}${
+            o.locality?' · '+esc(o.locality):''}</div>
+        </div>
+        <div class="act"><button class="ghost">${open?'Hide':'See companies'}</button></div>
       </div>
-      <div class="act"><button class="ghost">${open?'Hide':'See companies'}</button></div>
+      ${open ? `<div data-officer-panel="${esc(o.officer_id)}" style="padding:0 14px 14px">
+          ${officerCompaniesHtml(open.data, added)}</div>` : ''}`;
+    }).join('')}</div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin:0 0 16px;flex-wrap:wrap">
+      <span class="hint" style="margin:0">Filed under a different spelling?</span>
+      <input id="otherSpelling" placeholder="e.g. Jonathon Paton"
+        style="font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px">
+      <button class="ghost" id="otherSpellingGo">Look again</button>
     </div>
-    ${open ? `<div data-officer-panel="${esc(o.officer_id)}"
-        style="padding:0 14px 14px">${officerCompaniesHtml(coOpen.data)}</div>` : ''}`;
-  }).join('')}</div>
-    <p class="hint">Several people can share a name — check the location and date of birth
-      before selecting. You can pick more than one if you appear more than once.</p>`;
+    <p class="hint">Several people can share a name — check the date of birth and
+      location before selecting. Open as many as you need.</p>`;
 }
 
 /* A role they still hold, at a company still trading. Everything else is shown
@@ -919,20 +954,22 @@ function renderOfficerResults(r){
    dissolved companies to add the two that matter. */
 const autoTick = c => c.is_current && c.company_status === 'active';
 
-function officerCompaniesHtml(d){
+function officerCompaniesHtml(d, added){
   const r = d.results || [];
   if (!r.length) return `<div class="none">No appointments found for this person.</div>`;
   const on = r.filter(autoTick).length;
-  return `<div class="group">
+  return `<div class="group" style="margin-bottom:0">
       <div class="head">
         <div><div class="t">${esc(d.officer_name||'')}</div>
           <div class="m">${r.length} appointment${r.length===1?'':'s'} — ${on} selected${
             r.length>on ? `, ${r.length-on} left unticked (resigned or dissolved)` : ''}</div></div>
+        ${added ? `<button class="ghost" data-undo-officer="1">Remove these</button>` : ''}
       </div>
       <div class="rows" style="border:0;border-radius:0">
         ${r.map(c=>`
           <div class="row">
-            <input type="checkbox" ${autoTick(c)?'checked':''} data-oc='${esc(JSON.stringify(c))}'>
+            <input type="checkbox" ${autoTick(c)?'checked':''} ${added?'disabled':''}
+              data-oc='${esc(JSON.stringify(c))}'>
             <div class="main">
               <div class="t">${esc(c.company_name)}
                 <span class="tag ${c.company_status==='active'?'ok':''}">${esc(c.company_status||'')}</span>
@@ -942,106 +979,68 @@ function officerCompaniesHtml(d){
           </div>`).join('')}
       </div>
     </div>
-    <button class="ghost" data-add-officer-cos="1">Add selected companies</button>`;
-}
-
-/* Companies House files the same person more than once — a new officer record
-   appears whenever the name or address is entered differently. Ten records for
-   one person is not unusual. Without this, "find all my companies" quietly
-   returns a third of them. */
-async function offerOtherRecords(root, W, via, also){
-  if (!via || !via.officer_id) return;
-  let d;
-  const q = also ? `?also=${encodeURIComponent(also)}` : '';
-  try { d = await api(`/api/officer/${via.officer_id}/others${q}`); } catch(e){ return; }
-  const r = (d.results || []).filter(x => (x.appointment_count || 0) > 0);
-  root.querySelectorAll('[data-other-records]').forEach(n => n.remove());
-  if (!r.length && !also) return;
-
-  const total = r.reduce((n,x)=>n+(x.appointment_count||0),0);
-  const box = document.createElement('div');
-  box.className = 'card';
-  box.setAttribute('data-other-records','1');
-  box.style.cssText = 'background:var(--warn-tint);border-color:transparent;margin-bottom:14px';
-  box.innerHTML = `
-    <div class="t">${r.length
-      ? `You appear on the register ${r.length} more time${r.length===1?'':'s'}`
-      : 'No other records found for that spelling'}</div>
-    <p class="m" style="margin:4px 0 12px">Companies House does not link a person's
-      records together. These share your date of birth (${esc(d.date_of_birth||'')}) and name,
-      and hold ${total} more appointment${total===1?'':'s'} between them. Add any that are you.</p>
-    <div class="rows" style="margin-bottom:0">
-      ${r.map(o=>`<div class="row">
-        <div class="main">
-          <div class="t">${esc(o.name)}</div>
-          <div class="m">${o.appointment_count} appointment${o.appointment_count===1?'':'s'}${
-            o.locality ? ' · '+esc(o.locality) : ''}</div>
-        </div>
-        <div class="act"><button class="ghost" data-add-other="${esc(o.officer_id)}"
-          data-add-name="${esc(o.name)}">See companies</button></div>
-      </div>`).join('')}
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
-      <span class="m">Filed under a different spelling?</span>
-      <input id="otherSpelling" placeholder="e.g. Jonathon Paton" value="${esc(also||'')}"
-        style="font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px">
-      <button class="ghost" id="otherSpellingGo">Look again</button>
-    </div>`;
-  root.prepend(box);
-
-  const again = () => {
-    const v = box.querySelector('#otherSpelling').value.trim();
-    if (v.length > 2) offerOtherRecords(root, W, via, v);
-  };
-  box.querySelector('#otherSpellingGo').onclick = again;
-  box.querySelector('#otherSpelling').onkeydown = e => { if (e.key === 'Enter') again(); };
-
-  /* Show, never blind-add. One of Jon's records holds six appointments, every
-     one of them resigned or at a dissolved company — "Add these" added nothing
-     and said nothing. Expanding shows the companies, pre-ticks the ones that
-     are current and trading, and leaves the rest visible to tick. */
-  box.querySelectorAll('[data-add-other]').forEach(b => b.onclick = async () => {
-    const id = b.dataset.addOther;
-    if (otherOpen && otherOpen.officer_id === id) { otherOpen = null; }
-    else {
-      b.disabled = true; b.textContent = 'Loading…';
-      otherOpen = { officer_id: id, name: b.dataset.addName,
-                    data: await api(`/api/officer/${id}/companies`) };
-    }
-    offerOtherRecords(root, W, via, also);
-  });
-
-  if (otherOpen) {
-    const row = box.querySelector(`[data-add-other="${otherOpen.officer_id}"]`);
-    if (row) {
-      row.textContent = 'Hide';
-      const panel = document.createElement('div');
-      panel.style.cssText = 'padding:0 14px 14px';
-      panel.innerHTML = officerCompaniesHtml(otherOpen.data);
-      row.closest('.row').after(panel);
-      wireOfficerCompanies(panel, W, {source:'officer_other_record',
-        officer_id: otherOpen.officer_id, officer_name: otherOpen.name,
-        merged_from: via.officer_id});
-    }
-  }
+    ${added
+      ? `<p class="hint" style="margin:8px 0 0">Added to your portfolio.</p>`
+      : `<button class="ghost" data-add-officer-cos="1" style="margin-top:10px">Add selected companies</button>`}`;
 }
 
 function wireOfficerCompanies(root, W, via){
-  const btn = root.querySelector('[data-add-officer-cos]');
-  if (!btn) return;
-  btn.onclick = () => {
-    const list = W ? S.watch.companies : S.companies;
+  const list = () => W ? S.watch.companies : S.companies;
+
+  const add = root.querySelector('[data-add-officer-cos]');
+  if (add) add.onclick = () => {
+    const taken = [];
     root.querySelectorAll('[data-oc]:checked').forEach(cb => {
       const c = JSON.parse(cb.dataset.oc);
-      if (!list.some(x=>x.company_number===c.company_number))
-        list.push({...c, include:true, relationship: W?'competitor':undefined,
-                   /* How this company entered the portfolio. Provenance, not
-                      identity — a Companies House officer id is not a person.
-                      One human routinely holds several. */
-                   via: via || {source:'company_search'}});
+      if (!list().some(x=>x.company_number===c.company_number)) {
+        list().push({...c, include:true, relationship: W?'competitor':undefined,
+                     /* Provenance, not identity — a Companies House officer id
+                        is not a person. One human routinely holds several. */
+                     via: via || {source:'company_search'}});
+        taken.push(c.company_number);
+      }
     });
+    if (via && coOpen[via.officer_id]) {
+      coOpen[via.officer_id].added = true;
+      coOpen[via.officer_id].taken = taken;   // so it can be undone exactly
+    }
     render();
   };
+
+  // Picking the wrong person is easy when ten of them share a name.
+  const undo = root.querySelector('[data-undo-officer]');
+  if (undo) undo.onclick = () => {
+    const open = via && coOpen[via.officer_id];
+    const taken = (open && open.taken) || [];
+    const l = list();
+    for (let i = l.length - 1; i >= 0; i--)
+      if (taken.includes(l[i].company_number)) l.splice(i, 1);
+    if (open) { open.added = false; open.taken = []; }
+    render();
+  };
+}
+
+/* Pull in the records Companies House search did not return but which match on
+   surname, forename and date of birth, so the list is one list. */
+async function mergeOtherRecords(officerId, also){
+  if (!coSearch || coSearch.mode !== 'officer') return;
+  let d;
+  const q = also ? `?also=${encodeURIComponent(also)}` : '';
+  try { d = await api(`/api/officer/${officerId}/others${q}`); } catch(e){ return; }
+
+  const have = new Set(coSearch.results.map(o => String(o.officer_id)));
+  let added = 0;
+  (d.results || []).forEach(o => {
+    if (have.has(String(o.officer_id))) {
+      // already listed — just mark it, so the list explains itself
+      const ex = coSearch.results.find(x => String(x.officer_id) === String(o.officer_id));
+      if (ex && !ex.also_you) { ex.also_you = true; added++; }
+    } else {
+      coSearch.results.push({...o, also_you: true});
+      added++;
+    }
+  });
+  if (added) render();
 }
 
 function wireCoResults(W){
@@ -1052,26 +1051,38 @@ function wireCoResults(W){
       list.push({...c, include:true, relationship: W?'competitor':undefined});
     render();
   });
+
   $('#stage').querySelectorAll('[data-pick-officer]').forEach(row => row.onclick = async (e) => {
     if (e.target.closest('[data-officer-panel]')) return;   // clicks inside the panel
     const id = row.dataset.pickOfficer;
-    if (coOpen && String(coOpen.officer_id) === String(id)) { coOpen = null; render(); return; }
+    if (coOpen[id]) {
+      // collapsing a record that was added leaves its companies in place; the
+      // panel's own Remove button is how you undo that, not this.
+      delete coOpen[id];
+      render();
+      return;
+    }
     row.style.opacity = .5;
-    const d = await api(`/api/officer/${id}/companies`);
-    coOpen = { officer_id: id, data: d };
+    coOpen[id] = { data: await api(`/api/officer/${id}/companies`), added:false, taken:[] };
     render();
+    mergeOtherRecords(id);
   });
 
-  // the expanded officer's companies, redrawn with everything else
-  if (coOpen) {
-    const panel = $(`[data-officer-panel="${coOpen.officer_id}"]`);
-    if (panel) {
-      const via = {source:'officer_search', officer_id: coOpen.officer_id,
-                   officer_name: coOpen.data.officer_name};
-      wireOfficerCompanies(panel, W, via);
-      offerOtherRecords(panel, W, via);
-    }
-  }
+  // every open record, rewired after the redraw
+  Object.keys(coOpen).forEach(id => {
+    const panel = $(`[data-officer-panel="${id}"]`);
+    if (!panel) return;
+    wireOfficerCompanies(panel, W, {source:'officer_search', officer_id:id,
+                                    officer_name: coOpen[id].data.officer_name});
+  });
+
+  const go = () => {
+    const v = $('#otherSpelling')?.value.trim();
+    const anyOpen = Object.keys(coOpen)[0];
+    if (v && v.length > 2 && anyOpen) mergeOtherRecords(anyOpen, v);
+  };
+  if ($('#otherSpellingGo')) $('#otherSpellingGo').onclick = go;
+  if ($('#otherSpelling')) $('#otherSpelling').onkeydown = e => { if (e.key==='Enter') go(); };
 }
 
 /* ── navigation ────────────────────────────────────────────────────── */
@@ -1092,7 +1103,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 04:25';
+window.BUILD = 'build 12 Aug 04:36';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
