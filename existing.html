@@ -109,6 +109,7 @@
   .secondary{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 20px;
        font:inherit;cursor:pointer}
   .saved{color:var(--ok);font-size:13px}
+  .saved.failed{color:#a11;font-weight:600}
 
   .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);
        border-radius:var(--r);font-size:14px}
@@ -798,11 +799,32 @@ async function save(){
   try{
     const r = await fetch(API + '/api/questionnaire', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if (!r.ok) throw new Error('http ' + r.status);
     const d = await r.json();
+    if (d.stored !== 'supabase') throw new Error(d.stored || 'not stored');
     S.submissionId = S.submissionId || d.submission_id;
-    $('#saved').textContent = 'Saved';
-    setTimeout(()=>{ $('#saved').textContent=''; }, 1800);
-  }catch(e){ $('#saved').textContent=''; }
+    saveState('saved');
+    return true;
+  }catch(e){
+    S.version -= 1;                      // do not spend a version on a failure
+    saveState('failed');
+    return false;
+  }
+}
+
+/* A save that fails must say so. Swallowing it meant a client whose answers
+   never reached the database saw exactly what a client whose answers landed
+   saw. The API answers 200 with `stored: "failed"` when the write itself
+   fails, so the HTTP status alone is not the answer. */
+function saveState(kind){
+  const el = $('#saved');
+  if (kind === 'saved'){
+    el.className = 'saved'; el.textContent = 'Saved';
+    setTimeout(()=>{ if (el.textContent === 'Saved') el.textContent=''; }, 1800);
+  } else {
+    el.className = 'saved failed';
+    el.textContent = 'Not saved — we will try again';
+  }
 }
 
 /* ── render ────────────────────────────────────────────────────────── */
@@ -893,7 +915,23 @@ function wire(id){
 
 /* ── navigation ────────────────────────────────────────────────────── */
 $('#next').onclick = async () => {
-  await save();
+  const ok = await save();
+
+  // Never confirm an authority record that was never stored.
+  if (!ok && STEPS[at][0] === 'review'){
+    $('#stage').innerHTML = `<div class="card" style="border-left:3px solid #a11">
+      <h2>We could not save your answers</h2>
+      <p class="lead">Nothing has been lost — everything you entered is still on this
+        page. This is a problem at our end.</p>
+      <button class="ghost" id="retrySubmit">Try again</button>
+      <p class="hint" style="margin:14px 0 0">If it fails again, call us on
+        <a href="tel:+441618335400">+44 161 833 5400</a>. Please do not close this page
+        until you have spoken to us.</p></div>`;
+    $('#retrySubmit').onclick = () => $('#next').click();
+    window.scrollTo(0,0);
+    return;
+  }
+
   if (STEPS[at][0] === 'review'){
     const sig = S.people.find(p => p.key === S.signatory.contact_key) || {};
     $('#stage').innerHTML = `<div class="card done-head">
@@ -922,7 +960,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 12 Aug 09:32';
+window.BUILD = 'build 16 Aug 07:21';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
