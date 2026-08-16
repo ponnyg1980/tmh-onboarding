@@ -109,6 +109,7 @@
   .secondary{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 20px;
        font:inherit;cursor:pointer}
   .saved{color:var(--ok);font-size:13px}
+  .saved.failed{color:#a11;font-weight:600}
 
   .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);
        border-radius:var(--r);font-size:14px}
@@ -248,17 +249,39 @@ async function api(path){
 }
 
 /* ── persistence: every step is saved before moving on ─────────────── */
+/* A save that fails must say so. This used to swallow the error and clear the
+   label, so a client whose submission never reached the database saw exactly
+   what a client whose submission landed saw. Note that the API answers 200 with
+   `stored: "failed"` when the database write itself fails, so the HTTP status
+   alone is not the answer. Returns whether it actually stored. */
 async function save(){
-  S.version += 1;
-  const body = { submission_id:S.submissionId, version:S.version, state:snapshot() };
+  const next = S.version + 1;
+  const body = { submission_id:S.submissionId, version:next, state:snapshot() };
   try{
     const r = await fetch(API + '/api/submission', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if (!r.ok) throw new Error('http ' + r.status);
     const d = await r.json();
+    if (d.stored !== 'supabase') throw new Error(d.stored || 'not stored');
     S.submissionId = S.submissionId || d.submission_id;
-    $('#saved').textContent = 'Saved';
-    setTimeout(()=>{ $('#saved').textContent=''; }, 1800);
-  }catch(e){ $('#saved').textContent=''; }
+    S.version = next;                    // only spend the version on success
+    saveState('saved');
+    return true;
+  }catch(e){
+    saveState('failed');
+    return false;
+  }
+}
+
+function saveState(kind){
+  const el = $('#saved');
+  if (kind === 'saved'){
+    el.className = 'saved'; el.textContent = 'Saved';
+    setTimeout(()=>{ if (el.textContent === 'Saved') el.textContent=''; }, 1800);
+  } else {
+    el.className = 'saved failed';
+    el.textContent = 'Not saved — we will try again';
+  }
 }
 function snapshot(){
   return {
@@ -587,6 +610,18 @@ function viewSummary(){
 }
 
 const BASIS_LABEL = Object.fromEntries(BASIS.map(([v,l])=>[v,l]));
+
+function viewSaveFailed(){
+  return `<div class="card" style="border-left:3px solid #a11">
+    <h2>We could not save your details</h2>
+    <p class="lead">Nothing has been lost — everything you entered is still on this
+      page. This is a problem at our end, not with anything you did.</p>
+    <button class="ghost" id="retrySubmit">Try again</button>
+    <p class="hint" style="margin:14px 0 0">If it fails again, call us on
+      <a href="tel:+441618335400">+44 161 833 5400</a> and we will take the details
+      over the phone. Please do not close this page until you have spoken to us.</p>
+  </div>`;
+}
 
 const sumRow = (label, value) => `<div class="row"><div class="main">
     <div class="t">${label}</div></div><div class="act"><strong>${value}</strong></div></div>`;
@@ -1088,7 +1123,18 @@ function wireCoResults(W){
 /* ── navigation ────────────────────────────────────────────────────── */
 $('#next').onclick = async () => {
   const st = steps();
-  await save();
+  const ok = await save();
+
+  /* Never tell someone their portfolio is set up when nothing was stored.
+     Everything they entered is still in the page, so retrying costs them
+     nothing. */
+  if (!ok && st[at].id === 'review'){
+    $('#stage').innerHTML = viewSaveFailed();
+    $('#retrySubmit').onclick = () => $('#next').click();
+    window.scrollTo(0,0);
+    return;
+  }
+
   if (st[at].id === 'review'){
     $('#stage').innerHTML = viewSummary();
     $('#next').style.display='none'; $('#back').style.display='none';
@@ -1103,7 +1149,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 12 Aug 09:32';
+window.BUILD = 'build 16 Aug 07:21';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
