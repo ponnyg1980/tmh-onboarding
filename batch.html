@@ -218,7 +218,7 @@ function batchCard(b, clients){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 26 Aug 07:37';
+window.BUILD = 'build 26 Aug 15:39';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
