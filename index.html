@@ -262,7 +262,10 @@ async function save(){
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
     if (!r.ok) throw new Error('http ' + r.status);
     const d = await r.json();
-    if (d.stored !== 'supabase') throw new Error(d.stored || 'not stored');
+    /* Trust the failure, not the provider name. This used to test for
+       'supabase' specifically, which would have reported every successful
+       save as a failure the moment the backend moved to the Portal. */
+    if (!d.stored || d.stored === 'failed') throw new Error(d.stored || 'not stored');
     S.submissionId = S.submissionId || d.submission_id;
     S.version = next;                    // only spend the version on success
     saveState('saved');
@@ -1149,7 +1152,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 16 Aug 07:21';
+window.BUILD = 'build 26 Aug 07:37';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
