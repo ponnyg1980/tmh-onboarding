@@ -61,7 +61,7 @@
 <div class="wrap">
   <header>
     <h1>Onboarding submissions</h1>
-    <span class="sub">TMH Analytics · onboarding.submissions</span>
+    <span class="sub">Temmy Portal · onboarding intake</span>
     <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
   </header>
 
@@ -79,11 +79,14 @@
 </div>
 
 <script>
-const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
+  'https://tmh-portal-8ctomd3iv-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rec = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+const recs = v => Array.isArray(v) ? v.filter(x => Object.keys(rec(x)).length) : [];
+const vals = v => Array.isArray(v) ? v : [];
 const $ = s => document.querySelector(s);
 const date = s => s ? new Date(s).toLocaleString('en-GB',
   {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
@@ -92,7 +95,8 @@ async function load(token){
   $('#out').innerHTML = '<div class="none">Loading…</div>';
   let d;
   try{
-    const r = await fetch(API + '/api/admin/submissions', {headers:{'x-admin-token':token}});
+    const r = await fetch(PORTAL_API + '/admin/submissions',
+      {headers:{'x-admin-token':token}});
     d = await r.json();
   }catch(e){ d = {error:'could not reach the API'}; }
 
@@ -109,10 +113,11 @@ async function load(token){
 }
 
 function render(rows){
+  rows = recs(rows);
   if (!rows.length){ $('#out').innerHTML = '<div class="none">No submissions yet.</div>'; return; }
 
-  const approved = rows.filter(r => r.authority?.decision === 'approve').length;
-  const people = rows.reduce((n,r) => n + (r.derived_command?.users?.length || 0), 0);
+  const approved = rows.filter(r => rec(r.authority).decision === 'approve').length;
+  const people = rows.reduce((n,r) => n + recs(rec(r.derived_command).users).length, 0);
 
   $('#out').innerHTML = `
     <div class="sum">
@@ -141,13 +146,16 @@ function render(rows){
 }
 
 function card(r){
-  const d = r.derived_command || {}, i = r.input || {};
-  const pf = d.portfolio || {}, w = d.watchlist || {};
-  const marks = (pf.applicants || []).reduce((n,a)=>n+(a.trademarks||[]).length,0);
-  const wMarks = (w.applicants || []).reduce((n,a)=>n+(a.trademarks||[]).length,0);
-  const auth = r.authority;
+  r = rec(r);
+  const d = rec(r.derived_command), i = rec(r.input);
+  const pf = rec(d.portfolio), w = rec(d.watchlist);
+  const applicants = recs(pf.applicants), companies = recs(pf.companies);
+  const watchApplicants = recs(w.applicants), watchCompanies = recs(w.companies);
+  const users = recs(d.users), auth = Object.keys(rec(r.authority)).length ? rec(r.authority) : null;
+  const marks = applicants.reduce((n,a)=>n+vals(a.trademarks).length,0);
+  const wMarks = watchApplicants.reduce((n,a)=>n+vals(a.trademarks).length,0);
   const decided = auth
-    ? `<span class="tag ${auth.decision==='approve'?'ok':'warn'}">${auth.decision}</span>`
+    ? `<span class="tag ${auth.decision==='approve'?'ok':'warn'}">${esc(auth.decision)}</span>`
     : '<span class="tag">no check</span>';
 
   return `<div class="s">
@@ -157,10 +165,10 @@ function card(r){
           <span class="tag brand">${esc(r.status)}</span></div>
         <div class="m">${esc(r.contact_email || 'no email')} ·
           ${marks} mark${marks===1?'':'s'} ·
-          ${(pf.companies||[]).length} compan${(pf.companies||[]).length===1?'y':'ies'} ·
-          ${(d.users||[]).length} user${(d.users||[]).length===1?'':'s'}${
-            (w.applicants||[]).length || (w.companies||[]).length
-              ? ` · watchlist ${wMarks} marks, ${(w.companies||[]).length} companies` : ''}</div>
+          ${companies.length} compan${companies.length===1?'y':'ies'} ·
+          ${users.length} user${users.length===1?'':'s'}${
+            watchApplicants.length || watchCompanies.length
+              ? ` · watchlist ${wMarks} marks, ${watchCompanies.length} companies` : ''}</div>
       </div>
       <div class="m" style="text-align:right;white-space:nowrap">${date(r.created_at)}<br>
         <code>version ${r.version} · ${r.versions} saved</code></div>
@@ -168,7 +176,7 @@ function card(r){
     <div class="body">
       ${auth ? `<h3>Authority</h3>
         <div class="m" style="margin-bottom:8px">${esc(auth.reason)}</div>
-        <table>${(auth.evidence||[]).map(e=>`<tr>
+        <table>${recs(auth.evidence).map(e=>`<tr>
           <td style="width:210px">${esc(e.signal)}</td>
           <td style="width:120px"><span class="tag ${
             e.outcome==='match'?'ok':e.outcome==='no_match'?'warn':''}">${esc(e.outcome)}</span></td>
@@ -177,42 +185,42 @@ function card(r){
       <h3>People</h3>
       <table>
         <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Position</th><th>Can</th></tr>
-        ${(d.users||[]).map(u=>`<tr>
+        ${users.map(u=>`<tr>
           <td>${esc(u.first)} ${esc(u.last)}${u.primary?' <span class="tag brand">primary</span>':''}</td>
           <td>${esc(u.email)}</td><td>${esc(u.mobile)}</td><td>${esc(u.position||'')}</td>
-          <td class="m">${Object.entries(u.perms||{}).filter(([,v])=>v)
-              .map(([k])=>k).join(', ') || '—'}</td></tr>`).join('')}
+          <td class="m">${Object.entries(rec(u.perms)).filter(([,v])=>v)
+              .map(([k])=>esc(k)).join(', ') || '—'}</td></tr>`).join('')}
       </table>
 
       <h3>Portfolio</h3>
       <table>
-        ${(pf.applicants||[]).map(a=>`<tr>
+        ${applicants.map(a=>`<tr>
           <td style="width:110px"><code>${esc(a.ipo_identifier)}</code></td>
           <td>${esc(a.name)}</td>
-          <td class="m">${(a.trademarks||[]).length} mark${(a.trademarks||[]).length===1?'':'s'}${
-            (a.excluded||[]).length?` · ${a.excluded.length} excluded`:''}</td>
-          <td class="m">${(a.trademarks||[]).join(', ')}</td></tr>`).join('')}
-        ${(pf.companies||[]).map(c=>`<tr>
+          <td class="m">${vals(a.trademarks).length} mark${vals(a.trademarks).length===1?'':'s'}${
+            vals(a.excluded).length?` · ${vals(a.excluded).length} excluded`:''}</td>
+          <td class="m">${vals(a.trademarks).map(esc).join(', ')}</td></tr>`).join('')}
+        ${companies.map(c=>`<tr>
           <td><code>${esc(c.company_number)}</code></td>
           <td colspan="3">${esc(c.company_name)}</td></tr>`).join('')}
       </table>
 
-      ${(w.applicants||[]).length || (w.companies||[]).length ? `<h3>Watchlist</h3>
+      ${watchApplicants.length || watchCompanies.length ? `<h3>Watchlist</h3>
       <table>
-        ${(w.applicants||[]).map(a=>`<tr>
+        ${watchApplicants.map(a=>`<tr>
           <td style="width:110px"><code>${esc(a.ipo_identifier)}</code></td>
           <td>${esc(a.name)}</td>
           <td class="m">${esc(a.relationship||'')}</td>
-          <td class="m">${(a.trademarks||[]).length} marks</td></tr>`).join('')}
-        ${(w.companies||[]).map(c=>`<tr>
+          <td class="m">${vals(a.trademarks).length} marks</td></tr>`).join('')}
+        ${watchCompanies.map(c=>`<tr>
           <td><code>${esc(c.company_number)}</code></td>
           <td>${esc(c.company_name)}</td>
           <td class="m" colspan="2">${esc(c.relationship||'')}</td></tr>`).join('')}
       </table>` : ''}
 
       <h3>Evidence</h3>
-      <div class="m">${(r.lookup_evidence||[]).length} lookup${
-        (r.lookup_evidence||[]).length===1?'':'s'} recorded at the time of the claim</div>
+      <div class="m">${vals(r.lookup_evidence).length} lookup${
+        vals(r.lookup_evidence).length===1?'':'s'} recorded at the time of the claim</div>
       <details style="margin-top:8px"><summary>Raw record</summary>
         <pre>${esc(JSON.stringify({input:i, authority:auth,
                                    lookup_evidence:r.lookup_evidence,
@@ -224,7 +232,7 @@ function card(r){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 26 Aug 15:39';
+window.BUILD = 'build 28 Aug 12:20';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
