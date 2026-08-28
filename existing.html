@@ -201,8 +201,9 @@
    what, on behalf of which owner, so the right agreement can be generated and
    the right verification demanded. */
 
-const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
+  'https://tmh-portal-8ctomd3iv-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
+const LOOKUP_API = PORTAL_API + '/lookups';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -213,7 +214,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    evidence if you can show what was confirmed. */
 const EVIDENCE = [];
 async function api(path){
-  const r = await fetch(API + path);
+  const r = await fetch(LOOKUP_API + path);
   if (!r.ok) throw new Error('lookup failed');
   const d = await r.json();
   EVIDENCE.push({ at:new Date().toISOString(), endpoint:path,
@@ -276,8 +277,16 @@ const SPEND = [['none','No set limit'], ['25000','Up to £250'], ['50000','Up to
                ['100000','Up to £1,000'], ['custom','Custom']];
 
 /* ── state ─────────────────────────────────────────────────────────── */
+function newSubmissionId(){
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.floor(Math.random() * 16);
+    return (c === 'x' ? r : (r & 3) | 8).toString(16);
+  });
+}
+
 const S = {
-  submissionId: null, version: 0, seed: null,
+  submissionId: newSubmissionId(), version: 0, seed: null,
   owner: null, records: [], trademarks: [], counts: {},
   ownerConfirmation: null,
   ownerCorrection: { name:'', address:'', company_number:'', note:'' },
@@ -290,7 +299,7 @@ const S = {
 function blankPerson(primary){
   return { key: 'p' + Math.random().toString(36).slice(2,9),
            first:'', last:'', job:'', email:'', phone:'', relationship:'',
-           primary: !!primary, portal:'none', reports: !!primary,
+           primary: !!primary, portal:'none',
            role: primary ? 'decision_maker' : 'notification',
            perms: roleDefaults(primary ? 'decision_maker' : 'notification'),
            spendBasis:'100000', spendCustom:'',
@@ -481,15 +490,6 @@ function personFields(p, i){
       <div class="seg">
         ${[['none','No access'],['user','User'],['administrator','Administrator']]
           .map(([v,l])=>`<button data-portal="${i}:${v}" aria-pressed="${p.portal===v}">${l}</button>`).join('')}
-      </div>
-    </div>
-    <div class="perm" style="margin-top:12px">
-      <div class="lbl">Should this person receive monitoring reports?
-        <div class="sub">Reports go to your main contact unless you direct them to
-          someone else — they must go to at least one person</div></div>
-      <div class="seg">
-        ${[[true,'Receives reports'],[false,'Does not']]
-          .map(([v,l])=>`<button data-reports="${i}:${v?1:0}" aria-pressed="${!!p.reports===v}">${l}</button>`).join('')}
       </div>
     </div>`;
 }
@@ -703,7 +703,7 @@ function viewReview(){
         <td>${p.scope==='all' ? (S.records.length>1 ? `All ${S.records.length} records` : 'The owner')
              : 'Applicant ' + esc(p.scope)}</td>
         <td>${money(p)}</td>
-        <td>${p.portal==='none'?'—':esc(p.portal)}${p.reports?' <span class="tag ok">reports</span>':''}</td>
+        <td>${p.portal==='none'?'—':esc(p.portal)}</td>
       </tr>`).join('')}
     </table>
 
@@ -753,7 +753,6 @@ function snapshot(){
       is_billing_contact: S.billing.mode==='primary' ? !!p.primary
                           : (S.billing.email||'').trim().toLowerCase() === p.email.trim().toLowerCase(),
       portal_access: p.portal,
-      receives_reports: !!p.reports,
     });
   }));
 
@@ -798,6 +797,9 @@ async function save(){
   S.version += 1;
   const st = snapshot();
   const body = { submission_id:S.submissionId, version:S.version, state:st,
+    form_type:'existing_client_compliance',
+    schema_version:'tmh-onboarding.existing-client-compliance.v1',
+    completed:STEPS[at][0] === 'review',
     seed_token: S.seed ? S.seed.seed_token : null,
     input: {
       owner_group_key: S.owner ? S.owner.group_key : null,
@@ -807,14 +809,12 @@ async function save(){
       portfolio_confirmation: S.portfolioConfirmation,
     } };
   try{
-    const r = await fetch(API + '/api/questionnaire', {method:'POST',
+    const r = await fetch(PORTAL_API + '/submissions', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
     if (!r.ok) throw new Error('http ' + r.status);
     const d = await r.json();
-    /* Trust the failure, not the provider name. This used to test for
-       'supabase' specifically, which would have reported every successful
-       save as a failure the moment the backend moved to the Portal. */
-    if (!d.stored || d.stored === 'failed') throw new Error(d.stored || 'not stored');
+    if (!d.stored || d.stored === 'failed')
+      throw new Error(d.stored || 'not stored');
     S.submissionId = S.submissionId || d.submission_id;
     saveState('saved');
     return true;
@@ -892,11 +892,6 @@ function wire(id){
   });
   $$('[data-portal]').forEach(b => b.onclick = () => {
     const [i,v] = b.dataset.portal.split(':'); S.people[+i].portal = v; render(); });
-  $$('[data-reports]').forEach(b => b.onclick = () => {
-    const [i,v] = b.dataset.reports.split(':');
-    S.people[+i].reports = v === '1';
-    if (!S.people.some(x => x.reports)) S.people[+i].reports = true;  // someone must get them
-    render(); save(); });
   $$('[data-drop]').forEach(b => b.onclick = () => {
     S.people.splice(+b.dataset.drop,1); render(); });
   if ($('#addPerson')) $('#addPerson').onclick = () => { S.people.push(blankPerson(false)); render(); };
@@ -936,17 +931,19 @@ $('#next').onclick = async () => {
   const ok = await save();
 
   // Never confirm an authority record that was never stored.
-  if (!ok && STEPS[at][0] === 'review'){
-    $('#stage').innerHTML = `<div class="card" style="border-left:3px solid #a11">
-      <h2>We could not save your answers</h2>
-      <p class="lead">Nothing has been lost — everything you entered is still on this
-        page. This is a problem at our end.</p>
-      <button class="ghost" id="retrySubmit">Try again</button>
-      <p class="hint" style="margin:14px 0 0">If it fails again, call us on
-        <a href="tel:+441618335400">+44 161 833 5400</a>. Please do not close this page
-        until you have spoken to us.</p></div>`;
-    $('#retrySubmit').onclick = () => $('#next').click();
-    window.scrollTo(0,0);
+  if (!ok){
+    if (STEPS[at][0] === 'review'){
+      $('#stage').innerHTML = `<div class="card" style="border-left:3px solid #a11">
+        <h2>We could not save your answers</h2>
+        <p class="lead">Nothing has been lost — everything you entered is still on this
+          page. This is a problem at our end.</p>
+        <button class="ghost" id="retrySubmit">Try again</button>
+        <p class="hint" style="margin:14px 0 0">If it fails again, call us on
+          <a href="tel:+441618335400">+44 161 833 5400</a>. Please do not close this page
+          until you have spoken to us.</p></div>`;
+      $('#retrySubmit').onclick = () => $('#next').click();
+      window.scrollTo(0,0);
+    }
     return;
   }
 
@@ -978,7 +975,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 26 Aug 15:39';
+window.BUILD = 'build 28 Aug 12:20';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
@@ -988,7 +985,10 @@ async function loadSeed(tok){
   $('#stage').innerHTML = '<div class="card"><div class="none"><span class="spin"></span> ' +
     'Loading your details…</div></div>';
   let d;
-  try { d = await api(`/api/seed/${tok}`); } catch(e){ d = {error:'not found'}; }
+  try {
+    const r = await fetch(`${PORTAL_API}/seeds/${encodeURIComponent(tok)}`);
+    d = r.ok ? await r.json() : {error:'not found'};
+  } catch(e){ d = {error:'not found'}; }
   if (d.error){
     $('#stage').innerHTML = `<div class="card"><div class="err">That link is not valid.
       Please call us on <a href="tel:+441618335400">+44 161 833 5400</a>.</div></div>`;
