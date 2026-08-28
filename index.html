@@ -202,6 +202,7 @@ const S = {
 
 function blankUser(primary){
   return { primary, first:'', last:'', position:'', email:'', mobile:'',
+           reports: !!primary,
            perms:{ read:true, request:false, authorise:false, pay:false } };
 }
 
@@ -314,7 +315,7 @@ function snapshot(){
                   .map(c=>({company_number:c.company_number, company_name:c.company_name,
                             relationship:c.relationship, via:c.via})),
     },
-    users: S.users,
+    users: S.users.map(u => ({...u, receives_reports:!!u.reports})),
     lookup_evidence: EVIDENCE,
   };
 }
@@ -485,7 +486,11 @@ function viewUsers(){
              ['authorise','Authorise changes'],['pay','Make payments']]
             .map(([k,l])=>`<label><input type="checkbox" data-p="${i}:${k}"
               ${u.perms[k]?'checked':''}> ${l}</label>`).join('')}
+          <label><input type="checkbox" data-rep="${i}" ${u.reports?'checked':''}>
+            Receives monitoring reports</label>
         </div>
+        ${u.primary && !u.reports ? `<p class="hint" style="margin:8px 0 0">Reports will go to
+          whoever is ticked below instead of you.</p>` : ''}
       </div>`).join('')}
     <button class="ghost" id="addUser">Add another user</button>
   </div>`;
@@ -538,9 +543,10 @@ function viewSummary(){
   const wCos    = S.watch.companies.filter(c=>c.include);
   const excluded = owned.reduce((n,a)=>n+a.marks.filter(m=>!m.include).length,0);
 
-  const perm = u => Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
+  const perm = u => (Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
     read:'View the portfolio', request:'Request changes',
-    authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only';
+    authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only')
+    + (u.reports ? ' · Receives reports' : '');
 
   return `<div class="card done-head">
       <h2>Your portfolio is being set up</h2>
@@ -686,7 +692,10 @@ function valid(id){
   if (id==='router') return Object.values(S.router).every(v=>v!==null);
   if (id==='users'){
     const p = S.users[0];
-    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.mobile.trim();
+    const recipients = S.users.filter(u=>u.reports);
+    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.mobile.trim()
+      && recipients.length > 0
+      && recipients.every(u=>u.first.trim() && u.last.trim() && /.+@.+\..+/.test(u.email));
   }
   return true;
 }
@@ -757,6 +766,12 @@ function wire(id){
       S.users.splice(+b.dataset.dropUser,1); render();
     });
     $('#addUser').onclick = () => { S.users.push(blankUser(false)); render(); };
+    $('#stage').querySelectorAll('[data-rep]').forEach(b => b.onchange = () => {
+      const i = +b.dataset.rep;
+      S.users[i].reports = b.checked;
+      if (!S.users.some(u => u.reports)) S.users[i].reports = true;
+      render();
+    });
   }
 }
 
@@ -1161,7 +1176,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 28 Aug 12:20';
+window.BUILD = 'build 28 Aug 17:35';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();

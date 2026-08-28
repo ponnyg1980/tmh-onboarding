@@ -299,7 +299,7 @@ const S = {
 function blankPerson(primary){
   return { key: 'p' + Math.random().toString(36).slice(2,9),
            first:'', last:'', job:'', email:'', phone:'', relationship:'',
-           primary: !!primary, portal:'none',
+           primary: !!primary, portal:'none', reports: !!primary,
            role: primary ? 'decision_maker' : 'notification',
            perms: roleDefaults(primary ? 'decision_maker' : 'notification'),
            spendBasis:'100000', spendCustom:'',
@@ -490,6 +490,15 @@ function personFields(p, i){
       <div class="seg">
         ${[['none','No access'],['user','User'],['administrator','Administrator']]
           .map(([v,l])=>`<button data-portal="${i}:${v}" aria-pressed="${p.portal===v}">${l}</button>`).join('')}
+      </div>
+    </div>
+    <div class="perm" style="margin-top:12px">
+      <div class="lbl">Should this person receive monitoring reports?
+        <div class="sub">Reports go to your main contact unless you direct them to
+          someone else — they must go to at least one person</div></div>
+      <div class="seg">
+        ${[[true,'Receives reports'],[false,'Does not']]
+          .map(([v,l])=>`<button data-reports="${i}:${v?1:0}" aria-pressed="${!!p.reports===v}">${l}</button>`).join('')}
       </div>
     </div>`;
 }
@@ -703,7 +712,7 @@ function viewReview(){
         <td>${p.scope==='all' ? (S.records.length>1 ? `All ${S.records.length} records` : 'The owner')
              : 'Applicant ' + esc(p.scope)}</td>
         <td>${money(p)}</td>
-        <td>${p.portal==='none'?'—':esc(p.portal)}</td>
+        <td>${p.portal==='none'?'—':esc(p.portal)}${p.reports?' <span class="tag ok">reports</span>':''}</td>
       </tr>`).join('')}
     </table>
 
@@ -723,10 +732,16 @@ function viewReview(){
 function valid(id){
   if (id==='owner')     return !!S.owner && !!S.ownerConfirmation;
   if (id==='portfolio') return !!S.portfolioConfirmation;
+  const recipients = S.people.filter(p => p.reports);
+  const reportsValid = recipients.length > 0 &&
+    recipients.every(p => p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email)
+      && p.relationship);
   if (id==='primary'){
     const p = S.people[0];
-    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.relationship;
+    return p.first.trim() && p.last.trim() && /.+@.+\..+/.test(p.email) && p.relationship
+      && reportsValid;
   }
+  if (id==='others') return reportsValid;
   if (id==='signatory') return !!S.signatory.contact_key && !!S.signatory.basis
                              && S.signatory.confirmed === true;
   return true;
@@ -753,6 +768,7 @@ function snapshot(){
       is_billing_contact: S.billing.mode==='primary' ? !!p.primary
                           : (S.billing.email||'').trim().toLowerCase() === p.email.trim().toLowerCase(),
       portal_access: p.portal,
+      receives_reports: !!p.reports,
     });
   }));
 
@@ -892,6 +908,11 @@ function wire(id){
   });
   $$('[data-portal]').forEach(b => b.onclick = () => {
     const [i,v] = b.dataset.portal.split(':'); S.people[+i].portal = v; render(); });
+  $$('[data-reports]').forEach(b => b.onclick = () => {
+    const [i,v] = b.dataset.reports.split(':');
+    S.people[+i].reports = v === '1';
+    if (!S.people.some(x => x.reports)) S.people[+i].reports = true;
+    render(); });
   $$('[data-drop]').forEach(b => b.onclick = () => {
     S.people.splice(+b.dataset.drop,1); render(); });
   if ($('#addPerson')) $('#addPerson').onclick = () => { S.people.push(blankPerson(false)); render(); };
@@ -975,7 +996,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 28 Aug 12:20';
+window.BUILD = 'build 28 Aug 17:35';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
