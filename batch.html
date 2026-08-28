@@ -104,8 +104,8 @@
 </div>
 
 <script>
-const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
+  'https://tmh-portal-8ctomd3iv-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
 const FORM = location.origin + location.pathname.replace(/[^/]*$/, 'existing.html');
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
@@ -121,7 +121,8 @@ async function load(token){
   $('#out').innerHTML = '<div class="none">Loading…</div>';
   let d;
   try{
-    const r = await fetch(API + '/api/admin/batches', {headers:{'x-admin-token':token}});
+    const r = await fetch(PORTAL_API + '/admin/batches',
+      {headers:{'x-admin-token':token}});
     d = await r.json();
   }catch(e){ d = {error:'could not reach the API'}; }
 
@@ -159,7 +160,7 @@ function render(){
   $$('[data-sent]').forEach(b => b.onclick = async (e) => {
     e.stopPropagation();
     b.disabled = true;
-    await fetch(API + '/api/admin/seed-sent', {method:'POST',
+    await fetch(PORTAL_API + '/admin/seed-sent', {method:'POST',
       headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
       body: JSON.stringify({seed_token: b.dataset.sent})});
     load(TOKEN);
@@ -218,7 +219,7 @@ function batchCard(b, clients){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 26 Aug 15:39';
+window.BUILD = 'build 28 Aug 12:20';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
