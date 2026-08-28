@@ -182,8 +182,16 @@ const basisSelect = (val, attr) => `<select ${attr} title="Why is this in your p
   BASIS.map(([v,l])=>`<option value="${v}" ${(val||'owned')===v?'selected':''}>${l}</option>`).join('') +
   `</select>`;
 
+function newSubmissionId(){
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.floor(Math.random() * 16);
+    return (c === 'x' ? r : (r & 3) | 8).toString(16);
+  });
+}
+
 const S = {
-  submissionId: null,
+  submissionId: newSubmissionId(),
   version: 0,
   router: { trademarks:null, companies:null, watchlist:null },
   applicants: [],      // {ipo,name,kind,postcode,marks:[{...,include}],companies:[]}
@@ -192,12 +200,8 @@ const S = {
   watch: { applicants:[], companies:[] },   // each carries .relationship
 };
 
-/* Reports go to the primary user unless they hand it to someone else — they
-   may well not want a fortnightly PDF themselves. At least one user must
-   receive them, or the reports go nowhere. */
 function blankUser(primary){
   return { primary, first:'', last:'', position:'', email:'', mobile:'',
-           reports: !!primary,
            perms:{ read:true, request:false, authorise:false, pay:false } };
 }
 
@@ -215,11 +219,9 @@ let at = 0;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $  = s => document.querySelector(s);
 
-/* Supabase refuses to render HTML from *.supabase.co, so the page is served
-   from a static host and the lookups run cross-origin against the function.
-   Served locally by server.py, everything is same-origin instead. */
-const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-  ? '' : 'https://nwsttrpnoygthbgcadmr.supabase.co/functions/v1/onboarding';
+const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
+  'https://tmh-portal-8ctomd3iv-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
+const LOOKUP_API = PORTAL_API + '/lookups';
 
 /* What the registers said at the moment of the claim. Kept because a portfolio
    claim can be disputed later, and "the register showed this on this date" is
@@ -245,7 +247,7 @@ function note(path, d){
 }
 
 async function api(path){
-  const r = await fetch(API + path);
+  const r = await fetch(LOOKUP_API + path);
   if (!r.ok) throw new Error('lookup failed');
   const d = await r.json();
   note(path, d);
@@ -260,16 +262,17 @@ async function api(path){
    alone is not the answer. Returns whether it actually stored. */
 async function save(){
   const next = S.version + 1;
-  const body = { submission_id:S.submissionId, version:next, state:snapshot() };
+  const body = { submission_id:S.submissionId, version:next,
+    form_type:'new_customer', schema_version:'tmh-onboarding.new-customer.v1',
+    completed:steps()[at].id === 'review',
+    state:snapshot() };
   try{
-    const r = await fetch(API + '/api/submission', {method:'POST',
+    const r = await fetch(PORTAL_API + '/submissions', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
     if (!r.ok) throw new Error('http ' + r.status);
     const d = await r.json();
-    /* Trust the failure, not the provider name. This used to test for
-       'supabase' specifically, which would have reported every successful
-       save as a failure the moment the backend moved to the Portal. */
-    if (!d.stored || d.stored === 'failed') throw new Error(d.stored || 'not stored');
+    if (!d.stored || d.stored === 'failed')
+      throw new Error(d.stored || 'not stored');
     S.submissionId = S.submissionId || d.submission_id;
     S.version = next;                    // only spend the version on success
     saveState('saved');
@@ -482,11 +485,7 @@ function viewUsers(){
              ['authorise','Authorise changes'],['pay','Make payments']]
             .map(([k,l])=>`<label><input type="checkbox" data-p="${i}:${k}"
               ${u.perms[k]?'checked':''}> ${l}</label>`).join('')}
-          <label><input type="checkbox" data-rep="${i}" ${u.reports?'checked':''}>
-            Receives monitoring reports</label>
         </div>
-        ${u.primary && !u.reports ? `<p class="hint" style="margin:8px 0 0">Reports will go to
-          whoever is ticked below instead of you.</p>` : ''}
       </div>`).join('')}
     <button class="ghost" id="addUser">Add another user</button>
   </div>`;
@@ -539,10 +538,9 @@ function viewSummary(){
   const wCos    = S.watch.companies.filter(c=>c.include);
   const excluded = owned.reduce((n,a)=>n+a.marks.filter(m=>!m.include).length,0);
 
-  const perm = u => (Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
+  const perm = u => Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
     read:'View the portfolio', request:'Request changes',
-    authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only')
-    + (u.reports ? ' · Receives reports' : '');
+    authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only';
 
   return `<div class="card done-head">
       <h2>Your portfolio is being set up</h2>
@@ -759,13 +757,6 @@ function wire(id){
       S.users.splice(+b.dataset.dropUser,1); render();
     });
     $('#addUser').onclick = () => { S.users.push(blankUser(false)); render(); };
-    $('#stage').querySelectorAll('[data-rep]').forEach(b => b.onchange = () => {
-      const i = +b.dataset.rep;
-      S.users[i].reports = b.checked;
-      // reports have to go to somebody
-      if (!S.users.some(u => u.reports)) { S.users[i].reports = true; }
-      render(); save();
-    });
   }
 }
 
@@ -995,7 +986,7 @@ function renderOfficerResults(r){
 
     <div style="display:flex;gap:8px;align-items:center;margin:0 0 16px;flex-wrap:wrap">
       <span class="hint" style="margin:0">Filed under a different spelling?</span>
-      <input id="otherSpelling" placeholder="e.g. Jonathon Paton"
+      <input id="otherSpelling" placeholder="e.g. Casey Sample"
         style="font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px">
       <button class="ghost" id="otherSpellingGo">Look again</button>
     </div>
@@ -1147,10 +1138,12 @@ $('#next').onclick = async () => {
   /* Never tell someone their portfolio is set up when nothing was stored.
      Everything they entered is still in the page, so retrying costs them
      nothing. */
-  if (!ok && st[at].id === 'review'){
-    $('#stage').innerHTML = viewSaveFailed();
-    $('#retrySubmit').onclick = () => $('#next').click();
-    window.scrollTo(0,0);
+  if (!ok){
+    if (st[at].id === 'review'){
+      $('#stage').innerHTML = viewSaveFailed();
+      $('#retrySubmit').onclick = () => $('#next').click();
+      window.scrollTo(0,0);
+    }
     return;
   }
 
@@ -1168,7 +1161,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 26 Aug 15:39';
+window.BUILD = 'build 28 Aug 12:20';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
