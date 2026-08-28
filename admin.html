@@ -95,7 +95,7 @@ async function load(token){
   $('#out').innerHTML = '<div class="none">Loading…</div>';
   let d;
   try{
-    const r = await fetch(PORTAL_API + '/admin/submissions',
+    const r = await fetch(PORTAL_API + '/admin/submissions?limit=250',
       {headers:{'x-admin-token':token}});
     d = await r.json();
   }catch(e){ d = {error:'could not reach the API'}; }
@@ -171,7 +171,8 @@ function card(r){
               ? ` · watchlist ${wMarks} marks, ${watchCompanies.length} companies` : ''}</div>
       </div>
       <div class="m" style="text-align:right;white-space:nowrap">${date(r.created_at)}<br>
-        <code>version ${r.version} · ${r.versions} saved</code></div>
+        <code>ID ${esc(r.submission_id)}<br>${esc(r.form_type)} ·
+          version ${esc(r.version)} · ${esc(r.versions)} saved</code></div>
     </div>
     <div class="body">
       ${auth ? `<h3>Authority</h3>
@@ -232,7 +233,7 @@ function card(r){
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 28 Aug 12:20';
+window.BUILD = 'build 28 Aug 15:48';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
