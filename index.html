@@ -546,23 +546,23 @@ function viewSummary(){
   const perm = u => (Object.entries(u.perms||{}).filter(([,v])=>v).map(([k])=>({
     read:'View the portfolio', request:'Request changes',
     authorise:'Authorise changes', pay:'Make payments'}[k] || k)).join(' · ') || 'View only')
-    + (u.reports ? ' · Receives reports' : '');
+    + (u.reports ? ' · Reports requested' : '');
 
   return `<div class="card done-head">
-      <h2>Your portfolio is being set up</h2>
+      <h2>Your details have been received</h2>
       <p class="lead">Reference <strong>${esc(ref)}</strong> · ${when}.
         Please keep a copy of this summary — print it or save it as a PDF.</p>
       <button class="ghost" id="printSummary">Print or save as PDF</button>
     </div>
 
     <div class="card">
-      <h2>What you have set up</h2>
+      <h2>What you submitted for review</h2>
       <div class="rows" style="margin-bottom:20px">
         ${sumRow('Trademarks in your portfolio', ownMarks)}
         ${cos.length ? sumRow('Companies linked to your portfolio', cos.length) : ''}
         ${wMarks || wCos.length ? sumRow('Trademarks on your watchlist', wMarks) : ''}
         ${wCos.length ? sumRow('Companies on your watchlist', wCos.length) : ''}
-        ${sumRow('People with access', S.users.length)}
+        ${sumRow('People named for requested access', S.users.length)}
       </div>
 
       ${owned.length ? `<h3>Trademarks in your portfolio</h3>
@@ -594,7 +594,7 @@ function viewSummary(){
             <td>${esc(c.relationship||'')}</td><td></td></tr>`).join('')}
         </table>` : ''}
 
-      <h3>Who has access</h3>
+      <h3>Requested access</h3>
       <table class="sum-table">
         ${S.users.map(u=>`<tr>
           <td><strong>${esc(u.first)} ${esc(u.last)}</strong>${
@@ -607,18 +607,14 @@ function viewSummary(){
     <div class="card">
       <h2>What happens next</h2>
       <ol class="next">
-        <li><strong>We check the details.</strong> Usually within one working day.
+        <li><strong>We review your submitted details.</strong>
           If anything needs confirming we will email you before going further.</li>
-        <li><strong>You get your login.</strong> Everyone listed above receives an
-          invitation by email. There is no password to choose — the link signs you in.</li>
-        <li><strong>Monitoring starts.</strong> We watch the UK register for
-          applications that conflict with your marks, and tell you when a renewal is
-          due. You do not need to do anything to switch this on.</li>
+        <li><strong>Access and services need separate confirmation.</strong>
+          This submission does not activate Portal access or monitoring.</li>
       </ol>
-      <p class="hint">Having something in your portfolio means you can see it and we
-        will monitor it. It does not by itself give anyone the right to make changes
-        to a trademark — that is set separately, per person, and we will confirm it
-        with you before acting.</p>
+      <p class="hint">This summary records your requested portfolio, access and report
+        recipients. It does not by itself give anyone the right to make changes to a
+        trademark. We will confirm the appropriate authority before acting.</p>
       <p class="hint" style="margin-bottom:0">Something not right? Call us on
         <a href="tel:+441618335400">+44 161 833 5400</a> quoting <strong>${esc(ref)}</strong>.
         Nothing here is fixed — you can add, remove or change any of it later.</p>
@@ -1176,7 +1172,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 28 Aug 17:35';
+window.BUILD = 'build TMH-129';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
