@@ -20,12 +20,14 @@
   .sub{color:var(--muted);font-size:13px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
         padding:20px;margin-bottom:14px}
-  input{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;
+  input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;
         min-width:min(420px,100%)}
   button{font:inherit;background:var(--brand);color:#fff;border:0;border-radius:8px;
          padding:11px 22px;font-weight:600;cursor:pointer}
   button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);
                padding:6px 12px;font-weight:400;font-size:13px}
+  button:disabled{opacity:.6;cursor:wait}
+  .action{display:flex;align-items:center;gap:10px;margin:0 0 14px}
   .sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:14px}
   .sum b{color:var(--ink);font-size:19px;font-weight:600;display:block}
   .s{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:12px;
@@ -87,6 +89,8 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
 const rec = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
 const recs = v => Array.isArray(v) ? v.filter(x => Object.keys(rec(x)).length) : [];
 const vals = v => Array.isArray(v) ? v : [];
+const peopleFor = r => recs(rec(r.derived_command)[
+  r.form_type === 'existing_client_compliance' ? 'people' : 'users']);
 const $ = s => document.querySelector(s);
 const date = s => s ? new Date(s).toLocaleString('en-GB',
   {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
@@ -117,7 +121,7 @@ function render(rows){
   if (!rows.length){ $('#out').innerHTML = '<div class="none">No submissions yet.</div>'; return; }
 
   const approved = rows.filter(r => rec(r.authority).decision === 'approve').length;
-  const people = rows.reduce((n,r) => n + recs(rec(r.derived_command).users).length, 0);
+  const people = rows.reduce((n,r) => n + peopleFor(r).length, 0);
 
   $('#out').innerHTML = `
     <div class="sum">
@@ -131,6 +135,12 @@ function render(rows){
 
   document.querySelectorAll('.s > .hd').forEach(h =>
     h.onclick = () => h.parentElement.classList.toggle('open'));
+  document.querySelectorAll('[data-loa]').forEach(b =>
+    b.onclick = () => downloadLoa(b));
+  document.querySelectorAll('[data-approve-plan]').forEach(b =>
+    b.onclick = () => approvePlan(b));
+  document.querySelectorAll('[data-apply-plan]').forEach(b =>
+    b.onclick = () => applyPlan(b));
 
   /* Deliberately JSON rather than CSV. The CSV shaping lives in
      export_submissions.py; reimplementing it here would give two definitions of
@@ -148,15 +158,54 @@ function render(rows){
 function card(r){
   r = rec(r);
   const d = rec(r.derived_command), i = rec(r.input);
+  const compliance = r.form_type === 'existing_client_compliance';
   const pf = rec(d.portfolio), w = rec(d.watchlist);
-  const applicants = recs(pf.applicants), companies = recs(pf.companies);
+  const applicants = compliance ? recs(d.records).map(a => ({...a,
+    trademarks: recs(d.trademarks).filter(t => recs(t.applicants).some(owner =>
+      owner.ipo_identifier === a.ipo_identifier)).map(t => t.application_number),
+  })) : recs(pf.applicants);
+  const companies = recs(pf.companies);
   const watchApplicants = recs(w.applicants), watchCompanies = recs(w.companies);
-  const users = recs(d.users), auth = Object.keys(rec(r.authority)).length ? rec(r.authority) : null;
-  const marks = applicants.reduce((n,a)=>n+vals(a.trademarks).length,0);
+  const users = peopleFor(r), auth = Object.keys(rec(r.authority)).length ? rec(r.authority) : null;
+  const reconciliation = rec(r.reconciliation);
+  const reconciliationResult = rec(reconciliation.result);
+  const decisions = recs(reconciliationResult.decisions);
+  const applicationPlan = rec(r.application_plan);
+  const applicationExecution = rec(r.application_execution);
+  const reviewHeld = decisions.some(item => item.decision === 'review_required' ||
+    (item.decision === 'proposed_unassignment' && !item.relationshipProvenance));
+  const marks = compliance ? recs(d.trademarks).length :
+    applicants.reduce((n,a)=>n+vals(a.trademarks).length,0);
   const wMarks = watchApplicants.reduce((n,a)=>n+vals(a.trademarks).length,0);
   const decided = auth
     ? `<span class="tag ${auth.decision==='approve'?'ok':'warn'}">${esc(auth.decision)}</span>`
     : '<span class="tag">no check</span>';
+  const loa = r.form_type === 'existing_client_compliance' && r.completed === true
+    ? `<div class="action"><button class="ghost" data-loa
+         data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}">
+         Generate draft LOA</button><span class="m" data-loa-status></span></div>` : '';
+  const approval = decisions.length ? `<div class="action">
+    ${Object.keys(applicationPlan).length
+      ? `<span class="tag ok">Application plan approved</span>
+         <span class="m">${esc(applicationPlan.primaryInvitee?.membershipRole || '')} ·
+           ${date(applicationPlan.approvedAt)}</span>
+         <button class="ghost" data-apply-plan
+           data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}">
+           Apply to Zoho</button>
+         <span class="m" data-apply-status>${Object.keys(applicationExecution).length
+           ? `CRM status: ${esc(applicationExecution.status)}${applicationExecution.error
+             ? ` · ${esc(applicationExecution.error)}` : ''}` : ''}</span>`
+      : `<select data-plan-role aria-label="Portal membership role">
+          <option value="">Select Portal role…</option>
+          ${['owner','admin','billing','viewer','advisor'].map(role =>
+            `<option value="${role}">${role}</option>`).join('')}
+         </select>
+         <button class="ghost" data-approve-plan
+           data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}"
+           ${reviewHeld ? 'disabled' : ''}>Approve application plan</button>
+         <span class="m" data-plan-status>${reviewHeld
+           ? 'Held: resolve every review-required decision first.' : ''}</span>`}
+    </div>` : '';
 
   return `<div class="s">
     <div class="hd">
@@ -165,8 +214,10 @@ function card(r){
           <span class="tag brand">${esc(r.status)}</span></div>
         <div class="m">${esc(r.contact_email || 'no email')} ·
           ${marks} mark${marks===1?'':'s'} ·
-          ${companies.length} compan${companies.length===1?'y':'ies'} ·
-          ${users.length} user${users.length===1?'':'s'}${
+          ${compliance ? `${applicants.length} applicant records` :
+            `${companies.length} compan${companies.length===1?'y':'ies'}`} ·
+          ${compliance ? `${users.length} ${users.length===1?'person':'people'} named` :
+            `${users.length} user${users.length===1?'':'s'}`}${
             watchApplicants.length || watchCompanies.length
               ? ` · watchlist ${wMarks} marks, ${watchCompanies.length} companies` : ''}</div>
       </div>
@@ -175,6 +226,18 @@ function card(r){
           version ${esc(r.version)} · ${esc(r.versions)} saved</code></div>
     </div>
     <div class="body">
+      ${approval}
+      ${loa}
+      ${decisions.length ? `<h3>Reconciliation</h3>
+        <div class="m">Snapshot <code>${esc(reconciliation.snapshot_id)}</code> ·
+          snapshot fingerprint <code>${esc(reconciliation.snapshot_fingerprint)}</code><br>
+          reconciliation fingerprint <code>${esc(reconciliation.fingerprint)}</code></div>
+        <table>${decisions.map(item=>`<tr>
+          <td><span class="tag ${item.decision === 'review_required' ? 'warn' :
+            item.decision === 'matched_unchanged' ? 'ok' : ''}">${esc(item.decision)}</span></td>
+          <td>${esc(item.submissionContactKey || item.snapshotContactId || '')}</td>
+          <td class="m">${esc(item.reason || vals(item.changes).join(', ') ||
+            item.relationshipProvenance || '')}</td></tr>`).join('')}</table>` : ''}
       ${auth ? `<h3>Authority</h3>
         <div class="m" style="margin-bottom:8px">${esc(auth.reason)}</div>
         <table>${recs(auth.evidence).map(e=>`<tr>
@@ -184,13 +247,22 @@ function card(r){
           <td class="m">${esc(e.detail)}</td></tr>`).join('')}</table>` : ''}
 
       <h3>People</h3>
+      ${compliance ? `<p class="m">Captured claims only. Portal selection does not prove
+        an invitation or settled authority. Report routing is separate from permission
+        to instruct work.</p>` : ''}
       <table>
-        <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Position</th><th>Can</th></tr>
+        <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Position</th>
+          <th>${compliance ? 'Captured permissions' : 'Can'}</th>
+          ${compliance ? '<th>Captured access / reports</th>' : ''}</tr>
         ${users.map(u=>`<tr>
           <td>${esc(u.first)} ${esc(u.last)}${u.primary?' <span class="tag brand">primary</span>':''}</td>
-          <td>${esc(u.email)}</td><td>${esc(u.mobile)}</td><td>${esc(u.position||'')}</td>
+          <td>${esc(u.email)}</td><td>${esc(compliance ? u.phone : u.mobile)}</td>
+          <td>${esc(compliance ? u.job : u.position)}</td>
           <td class="m">${Object.entries(rec(u.perms)).filter(([,v])=>v)
-              .map(([k])=>esc(k)).join(', ') || '—'}</td></tr>`).join('')}
+              .map(([k])=>esc(k)).join(', ') || '—'}</td>
+          ${compliance ? `<td class="m">Portal selection: ${esc(u.portal || 'Not provided')}<br>
+            Reports: ${u.reports === true ? 'Yes' : u.reports === false ? 'No' : 'Not provided'}<br>
+            Claimed role: ${esc(u.role || 'Not provided')}</td>` : ''}</tr>`).join('')}
       </table>
 
       <h3>Portfolio</h3>
@@ -223,17 +295,90 @@ function card(r){
       <div class="m">${vals(r.lookup_evidence).length} lookup${
         vals(r.lookup_evidence).length===1?'':'s'} recorded at the time of the claim</div>
       <details style="margin-top:8px"><summary>Raw record</summary>
-        <pre>${esc(JSON.stringify({input:i, authority:auth,
+        <pre>${esc(JSON.stringify({input:i, authority:auth, reconciliation,
+                                   application_plan:applicationPlan,
                                    lookup_evidence:r.lookup_evidence,
                                    derived_command:d}, null, 1))}</pre></details>
     </div>
   </div>`;
 }
 
+async function approvePlan(button){
+  const status = button.parentElement.querySelector('[data-plan-status]');
+  const membershipRole = button.parentElement.querySelector('[data-plan-role]').value;
+  const staffActorRef = prompt('Staff actor reference (for immutable approval evidence):',
+    sessionStorage.getItem('tmh_staff_actor_ref') || 'staff:');
+  if (!membershipRole || !staffActorRef) {
+    status.textContent = 'Select a role and enter a staff actor reference.';
+    return;
+  }
+  button.disabled = true;
+  status.textContent = 'Recording immutable plan…';
+  try{
+    const token = sessionStorage.getItem('tmh_admin_token') || '';
+    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/application-plan`;
+    const response = await fetch(PORTAL_API + path, {method:'POST', headers:{
+      'content-type':'application/json', 'x-admin-token':token,
+    }, body:JSON.stringify({membership_role:membershipRole,
+      staff_actor_ref:staffActorRef.trim()})});
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || 'Approval failed.');
+    sessionStorage.setItem('tmh_staff_actor_ref', staffActorRef.trim());
+    await load(token);
+  }catch(error){
+    status.textContent = error.message || 'Approval failed.';
+    button.disabled = false;
+  }
+}
+
+async function applyPlan(button){
+  const status = button.parentElement.querySelector('[data-apply-status]');
+  button.disabled = true;
+  status.textContent = 'Applying immutable plan…';
+  try{
+    const token = sessionStorage.getItem('tmh_admin_token') || '';
+    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/application-plan/apply-zoho`;
+    const response = await fetch(PORTAL_API + path, {method:'POST',
+      headers:{'x-admin-token':token}});
+    const data = await response.json();
+    if (!data.status) throw new Error(data.error || 'Application failed.');
+    status.textContent = `CRM status: ${data.status}${data.replayed ? ' (replayed)' : ''}` +
+      `${data.error ? ` · ${data.error}` : ''}`;
+  }catch(error){ status.textContent = error.message || 'Application failed.'; }
+  finally{ button.disabled = false; }
+}
+
+async function downloadLoa(button){
+  const status = button.parentElement.querySelector('[data-loa-status]');
+  button.disabled = true;
+  status.textContent = 'Generating…';
+  try{
+    const token = sessionStorage.getItem('tmh_admin_token') || '';
+    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/loa`;
+    const response = await fetch(PORTAL_API + path,
+      {headers:{'x-admin-token':token}});
+    const blob = await response.blob();
+    if (!response.ok || blob.type !== 'application/pdf' || !blob.size)
+      throw new Error(response.status === 401 ? 'Session expired.' : 'Draft LOA unavailable.');
+    const disposition = response.headers.get('content-disposition') || '';
+    const filename = disposition.match(/filename="([^"]+)"/)?.[1] || 'Draft LOA.pdf';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    status.textContent = 'Downloaded.';
+  }catch(error){ status.textContent = error.message || 'Draft LOA unavailable.'; }
+  finally{ button.disabled = false; }
+}
+
 $('#go').onclick = () => load($('#tok').value.trim());
 $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
 
-window.BUILD = 'build 28 Aug 15:48';
+window.BUILD = 'build TMH-128';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 const saved = sessionStorage.getItem('tmh_admin_token');
