@@ -175,6 +175,17 @@
   .note{background:var(--warn-tint);border-radius:8px;padding:12px 14px;font-size:13px;
        color:var(--warn);margin-bottom:14px}
   .note b{color:var(--ink)}
+  @media(max-width:640px){
+    .facts div.f{flex-direction:column;gap:4px}
+    .facts .k{width:auto}
+    .facts .v{min-width:0;overflow-wrap:anywhere}
+    table.authority-review,table.authority-review tbody,
+    table.authority-review tr,table.authority-review td{display:block}
+    table.authority-review tr:first-child{display:none}
+    table.authority-review td{padding:9px 0;overflow-wrap:anywhere}
+    table.authority-review td::before{content:attr(data-label);display:block;
+      color:var(--muted);font-size:12px;margin-bottom:4px}
+  }
 </style>
 </head>
 <body>
@@ -703,16 +714,16 @@ function viewReview(){
     </div>
 
     <h3>Who can instruct what</h3>
-    <table class="tm">
+    <table class="tm authority-review">
       <tr><th>Person</th><th>Role</th><th>Applies to</th><th>Fee limit</th><th>Portal</th></tr>
       ${named.map(p=>`<tr>
-        <td><strong>${esc(p.first)} ${esc(p.last)}</strong>${p.primary?' <span class="tag brand">main</span>':''}
+        <td data-label="Person"><strong>${esc(p.first)} ${esc(p.last)}</strong>${p.primary?' <span class="tag brand">main</span>':''}
           <div class="m">${esc(p.email)}</div></td>
-        <td>${esc(ROLE_LABEL[p.role]||'')}</td>
-        <td>${p.scope==='all' ? (S.records.length>1 ? `All ${S.records.length} records` : 'The owner')
+        <td data-label="Role">${esc(ROLE_LABEL[p.role]||'')}</td>
+        <td data-label="Applies to">${p.scope==='all' ? (S.records.length>1 ? `All ${S.records.length} records` : 'The owner')
              : 'Applicant ' + esc(p.scope)}</td>
-        <td>${money(p)}</td>
-        <td>${p.portal==='none'?'—':esc(p.portal)}${p.reports?' <span class="tag ok">reports</span>':''}</td>
+        <td data-label="Fee limit">${money(p)}</td>
+        <td data-label="Portal">${p.portal==='none'?'—':esc(p.portal)}${p.reports?' <span class="tag ok">reports</span>':''}</td>
       </tr>`).join('')}
     </table>
 
@@ -996,7 +1007,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 28 Aug 17:35';
+window.BUILD = 'build TMH-129';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
