@@ -94,6 +94,31 @@ const peopleFor = r => recs(rec(r.derived_command)[
 const $ = s => document.querySelector(s);
 const date = s => s ? new Date(s).toLocaleString('en-GB',
   {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+const outcomeLabel = value => ({
+  already_accepted:'access already active', completed:'completed', failed:'failed',
+  held:'held for review', invite_email_already_queued:'invitation already queued',
+  invite_email_not_recorded:'invitation not completed',
+  invite_email_in_progress:'invitation in progress', invite_email_queued:'invitation queued',
+  not_applicable:'not applicable', partial_failure:'partly failed',
+  provisioned:'provisioned', review_required:'review required',
+}[value] || String(value || 'unknown').replaceAll('_',' '));
+function applicationStatusText(data){
+  data = rec(data);
+  const crm = `CRM status: ${data.status || 'unknown'}${data.replayed ? ' (replayed)' : ''}` +
+    `${data.error ? ` · ${data.error}` : ''}`;
+  const results = recs(data.provisioning_results);
+  if (!results.length) return crm + (data.provisioning_status
+    ? ` · Portal: ${outcomeLabel(data.provisioning_status)}${data.provisioning_error
+      ? ` (${data.provisioning_error})` : ''}` : '');
+  return crm + ' · Portal: ' + results.map(item => {
+    const person = Number.isInteger(item.submitted_person_index)
+      ? `person ${item.submitted_person_index + 1}` : 'person';
+    const access = item.requested_portal_access === 'administrator'
+      ? 'Administrator' : item.requested_portal_access === 'user' ? 'User' : 'access';
+    return `${person} ${access}: ${outcomeLabel(item.status)}${item.error
+      ? ` (${item.error})` : ''}`;
+  }).join('; ');
+}
 
 async function load(token){
   $('#out').innerHTML = '<div class="none">Loading…</div>';
@@ -193,8 +218,7 @@ function card(r){
            data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}">
            Apply to Zoho</button>
          <span class="m" data-apply-status>${Object.keys(applicationExecution).length
-           ? `CRM status: ${esc(applicationExecution.status)}${applicationExecution.error
-             ? ` · ${esc(applicationExecution.error)}` : ''}` : ''}</span>`
+           ? esc(applicationStatusText(applicationExecution)) : ''}</span>`
       : `<select data-plan-role aria-label="Portal membership role">
           <option value="">Select Portal role…</option>
           ${['owner','admin','billing','viewer','advisor'].map(role =>
@@ -344,8 +368,7 @@ async function applyPlan(button){
       headers:{'x-admin-token':token}});
     const data = await response.json();
     if (!data.status) throw new Error(data.error || 'Application failed.');
-    status.textContent = `CRM status: ${data.status}${data.replayed ? ' (replayed)' : ''}` +
-      `${data.error ? ` · ${data.error}` : ''}`;
+    status.textContent = applicationStatusText(data);
   }catch(error){ status.textContent = error.message || 'Application failed.'; }
   finally{ button.disabled = false; }
 }
