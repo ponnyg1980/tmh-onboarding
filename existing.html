@@ -175,6 +175,7 @@
   .note{background:var(--warn-tint);border-radius:8px;padding:12px 14px;font-size:13px;
        color:var(--warn);margin-bottom:14px}
   .note b{color:var(--ink)}
+  @media screen and (max-width:640px){.table-scroll{overflow-x:auto}}
   @media(max-width:640px){
     .facts div.f{flex-direction:column;gap:4px}
     .facts .k{width:auto}
@@ -449,6 +450,7 @@ function viewPortfolio(){
       with someone else.</b> Authority from you does not extend to another proprietor, so we
       will confirm those separately before acting on them. They are shaded below.</div>` : ''}
 
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Your trademarks">
     <table class="tm">
       <tr><th>Trademark</th><th>Number</th><th>Status</th><th>Agent on the register</th></tr>
       ${t.map(m=>`<tr class="${m.jointly_owned?'j':''}">
@@ -463,6 +465,7 @@ function viewPortfolio(){
              : esc((m.representatives||[])[0] || 'none recorded')}</td>
       </tr>`).join('')}
     </table>
+    </div>
 
     <h3>Does this portfolio look correct?</h3>
     <div class="choice">
