@@ -119,6 +119,7 @@
   .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
   .none{padding:18px;color:var(--muted);font-size:14px}
   @media(max-width:640px){.grid{grid-template-columns:1fr}.choice{flex-direction:column}}
+  @media screen and (max-width:640px){.table-scroll{overflow-x:auto}}
 
   /* order summary */
   .done-head{border-left:3px solid var(--ok)}
@@ -571,20 +572,25 @@ function viewSummary(){
               <div class="m">Applicant ${esc(a.ipo)} · ${
                 a.marks.filter(m=>m.include).length} in your portfolio ·
                 ${esc(BASIS_LABEL[a.basis||'owned'])}</div></div></div>
-            <table class="sum-table">${markRows([a])}</table>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Trademarks in your portfolio">
+              <table class="sum-table">${markRows([a])}</table>
+            </div>
           </div>`).join('')}
         ${excluded ? `<p class="hint">${excluded} trademark${excluded===1?'':'s'} you
           unticked ${excluded===1?'is':'are'} not included. Tell us any time and we will add
           ${excluded===1?'it':'them'}.</p>` : ''}` : ''}
 
       ${cos.length ? `<h3>Companies in your portfolio</h3>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Companies in your portfolio">
         <table class="sum-table">${cos.map(c=>`<tr>
           <td><strong>${esc(c.company_name)}</strong></td>
           <td>${esc(c.company_number)}</td>
           <td>${esc(c.company_status||'')}</td>
-          <td>${esc(BASIS_LABEL[c.basis||'owned'])}</td></tr>`).join('')}</table>` : ''}
+          <td>${esc(BASIS_LABEL[c.basis||'owned'])}</td></tr>`).join('')}</table>
+        </div>` : ''}
 
       ${wApps.length || wCos.length ? `<h3>Your watchlist</h3>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Your watchlist">
         <table class="sum-table">
           ${wApps.map(a=>`<tr><td><strong>${esc(a.name)}</strong></td>
             <td>${a.marks.filter(m=>m.include).length} trademarks</td>
@@ -592,9 +598,10 @@ function viewSummary(){
           ${wCos.map(c=>`<tr><td><strong>${esc(c.company_name)}</strong></td>
             <td>${esc(c.company_number)}</td>
             <td>${esc(c.relationship||'')}</td><td></td></tr>`).join('')}
-        </table>` : ''}
+        </table></div>` : ''}
 
       <h3>Requested access</h3>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Requested access">
       <table class="sum-table">
         ${S.users.map(u=>`<tr>
           <td><strong>${esc(u.first)} ${esc(u.last)}</strong>${
@@ -602,6 +609,7 @@ function viewSummary(){
           <td>${esc(u.email)}</td>
           <td colspan="2">${esc(perm(u))}</td></tr>`).join('')}
       </table>
+      </div>
     </div>
 
     <div class="card">
