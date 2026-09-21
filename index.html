@@ -553,6 +553,7 @@ function viewSummary(){
       <h2>Your details have been received</h2>
       <p class="lead">Reference <strong>${esc(ref)}</strong> · ${when}.
         Please keep a copy of this summary — print it or save it as a PDF.</p>
+      <button class="primary" id="continuePortalSetup">Continue to secure Portal access</button>
       <button class="ghost" id="printSummary">Print or save as PDF</button>
     </div>
 
@@ -617,8 +618,13 @@ function viewSummary(){
       <ol class="next">
         <li><strong>We review your submitted details.</strong>
           If anything needs confirming we will email you before going further.</li>
-        <li><strong>Access and services need separate confirmation.</strong>
-          This submission does not activate Portal access or monitoring.</li>
+        <li><strong>Verify your primary email.</strong>
+          Continue to the Portal, accept the current policies, then use the
+          secure link we email you.</li>
+        <li><strong>Your submitted details remain pending.</strong>
+          This submission does not activate Portal access or monitoring.
+          Email verification creates only a provisional account; it does not
+          activate ownership or authority.</li>
       </ol>
       <p class="hint">This summary records your requested portfolio, access and report
         recipients. It does not by itself give anyone the right to make changes to a
@@ -1170,6 +1176,12 @@ $('#next').onclick = async () => {
     $('#stage').innerHTML = viewSummary();
     $('#next').style.display='none'; $('#back').style.display='none';
     $('#progress').style.display='none';
+    $('#continuePortalSetup').onclick = () => {
+      const url = new URL('/complete-registration', new URL(PORTAL_API).origin);
+      url.searchParams.set('submission_id', S.submissionId);
+      url.searchParams.set('version', String(S.version));
+      window.location.assign(url.toString());
+    };
     $('#printSummary').onclick = () => window.print();
     window.scrollTo(0,0);
     return;
@@ -1180,7 +1192,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build TMH-129';
+window.BUILD = 'build d1f21be2830d6c550c67b463d569289da70f1599';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
 render();
