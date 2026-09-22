@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Onboarding submissions — The Trademark Helpline</title>
+<title>Client onboarding — The Trademark Helpline</title>
 <style>
   :root{
     --ink:#14161a; --muted:#6b7280; --line:#e4e6ea; --bg:#f7f8fa; --card:#fff;
@@ -26,7 +26,16 @@
          padding:11px 22px;font-weight:600;cursor:pointer}
   button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);
                padding:6px 12px;font-weight:400;font-size:13px}
+  .button-link{display:inline-block;background:#fff;color:var(--ink);border:1px solid var(--line);
+               border-radius:8px;padding:6px 12px;font-size:13px;text-decoration:none}
   button:disabled{opacity:.6;cursor:wait}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .tabs button{background:transparent;color:var(--muted);border-radius:0;padding:10px 14px;
+               border-bottom:2px solid transparent}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--brand)}
+  .tabs .count{background:#eef0f3;border-radius:99px;font-size:11px;margin-left:5px;
+               padding:2px 7px}
+  .tabs button[aria-selected="true"] .count{background:var(--brand-tint);color:var(--brand)}
   .action{display:flex;align-items:center;gap:10px;margin:0 0 14px}
   .sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:14px}
   .sum b{color:var(--ink);font-size:19px;font-weight:600;display:block}
@@ -54,16 +63,66 @@
   code{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
   .err{background:#fdecec;color:#a11;border-radius:8px;padding:10px 12px;margin-bottom:12px}
   .none{color:var(--muted);padding:22px;text-align:center}
+  .client-list{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+  .client{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(210px,1fr) 140px auto;
+          gap:16px;align-items:center;padding:14px 16px}
+  .client+.client{border-top:1px solid var(--line)}
+  .client-actions{text-align:right;white-space:nowrap}
+  @media (max-width:760px){
+    .tabs{overflow-x:auto}
+    .tabs button{white-space:nowrap}
+    .client{grid-template-columns:1fr}
+    .client-actions{text-align:left}
+  }
   details summary{cursor:pointer;color:var(--brand);font-size:13px}
   pre{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;
       overflow:auto;font-size:12px;max-height:340px}
+  .approval-dialog{width:min(520px,calc(100vw - 32px));padding:0;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:visible}
+  .approval-dialog::backdrop{background:rgba(20,22,26,.5)}
+  .approval-dialog-shell{padding:22px}
+  .dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .dialog-kicker{display:block;color:var(--brand);font-size:11px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+  .dialog-title{font-size:21px;line-height:1.25;letter-spacing:-.01em;margin:0 0 8px}
+  button.dialog-close{flex:none;width:30px;height:30px;padding:0;background:transparent;
+    color:var(--muted);border:1px solid transparent;font-size:20px;line-height:1;font-weight:400}
+  button.dialog-close:hover{color:var(--ink);background:var(--bg);border-color:var(--line)}
+  button.dialog-close:focus-visible{outline:3px solid var(--brand-tint);border-color:var(--brand)}
+  .dialog-description{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .hold-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+    padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);
+    font-size:13px;margin-bottom:18px}
+  .hold-summary span{color:var(--muted)}
+  .hold-summary strong{text-align:right;font-weight:600}
+  .approval-field{margin-top:14px}
+  .approval-field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}
+  .approval-field select{display:block;width:100%;min-width:0;background:#fff;color:var(--ink)}
+  .approval-field select:focus-visible{outline:3px solid var(--brand-tint);
+    border-color:var(--brand)}
+  .approval-field textarea{display:block;width:100%;min-height:86px;resize:vertical;
+    font:inherit;padding:10px 12px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:8px}
+  .approval-field textarea:focus-visible{outline:3px solid var(--brand-tint);
+    border-color:var(--brand)}
+  .field-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);
+    font-size:11px;margin-top:5px}
+  .dialog-error{min-height:20px;color:#a11;font-size:12px;margin:10px 0 0}
+  .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .dialog-actions button{padding:8px 14px;font-size:13px}
+  @media (max-width:560px){
+    .approval-dialog-shell{padding:18px}
+    .hold-summary{display:block}
+    .hold-summary strong{display:block;text-align:left;margin-top:4px}
+  }
+  [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Onboarding submissions</h1>
-    <span class="sub">Temmy Portal · onboarding intake</span>
+    <h1>Onboarding</h1>
+    <span class="sub">Temmy Portal · client journey</span>
     <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
   </header>
 
@@ -77,12 +136,89 @@
     <p class="sub" style="margin-bottom:0">Held for this browser tab only, never stored.</p>
   </div>
 
+  <div class="tabs" id="tabs" role="tablist" aria-label="Onboarding worklists"
+    style="display:none">
+    <button type="button" role="tab" data-tab="ready" aria-selected="true">
+      Ready to Invite <span class="count" data-count="ready">0</span>
+    </button>
+    <button type="button" role="tab" data-tab="invited" aria-selected="false">
+      Invited <span class="count" data-count="invited">0</span>
+    </button>
+    <button type="button" role="tab" data-tab="submissions" aria-selected="false">
+      Submissions <span class="count" data-count="submissions">0</span>
+    </button>
+    <button type="button" role="tab" data-tab="access" aria-selected="false">
+      Portal Access <span class="count" data-count="access">0</span>
+    </button>
+  </div>
+
+  <p class="m" id="page-status" role="status" aria-live="polite"></p>
   <div id="out"></div>
 </div>
 
+<dialog class="approval-dialog" id="access-approval-dialog"
+  aria-labelledby="access-approval-title" aria-describedby="access-approval-description">
+  <div class="approval-dialog-shell">
+    <div class="dialog-heading">
+      <div>
+        <span class="dialog-kicker">Privileged action</span>
+        <h2 class="dialog-title" id="access-approval-title">Approve Portal access</h2>
+      </div>
+      <button type="button" class="dialog-close" data-access-approval-cancel
+        aria-label="Close approval dialog">×</button>
+    </div>
+    <p class="dialog-description" id="access-approval-description">
+      Record the responsible administrator’s decision. This approves Portal membership access;
+      it does not settle legal authority.
+    </p>
+    <div class="hold-summary">
+      <span>Held permissions</span>
+      <strong data-access-approval-hold>Permission hold</strong>
+    </div>
+    <div class="approval-field">
+      <label for="access-approval-reason">Approval reason</label>
+      <select id="access-approval-reason" data-access-approval-reason>
+        <option value="">Select a reason</option>
+        <option value="client-request">Client request verified</option>
+        <option value="relationship-confirmed">Existing relationship confirmed</option>
+        <option value="access-reviewed">Access level reviewed</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="approval-field" data-access-approval-other-field hidden>
+      <label for="access-approval-other">Other reason</label>
+      <textarea id="access-approval-other" data-access-approval-other maxlength="493"
+        placeholder="State the evidence and operational reason."></textarea>
+      <div class="field-meta">
+        <span>Required when “Other” is selected.</span>
+        <span data-access-approval-other-count>0/493</span>
+      </div>
+    </div>
+    <p class="dialog-error" data-access-approval-error role="alert" aria-live="polite"></p>
+    <div class="dialog-actions">
+      <button type="button" class="ghost" data-access-approval-cancel>Cancel</button>
+      <button type="button" data-access-approval-submit disabled>Approve Portal access</button>
+    </div>
+  </div>
+</dialog>
+
 <script>
-const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
-  'https://tmh-portal-git-dev-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
+const CURRENT_LOCATION = globalThis.location || {origin:'', pathname:''};
+const ADMIN_SESSION_MODE = CURRENT_LOCATION.pathname === '/admin/submissions/viewer';
+const ADMIN_ROLE = 'ADMIN_ROLE_STAMP';
+const PORTAL_API = ADMIN_SESSION_MODE ? '/api/admin/onboarding-submissions' :
+  (globalThis.TMH_PORTAL_API_BASE ||
+  'https://tmh-portal-git-dev-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake');
+const SUBMISSIONS_PATH = ADMIN_SESSION_MODE ? '' : '/admin/submissions';
+const WORKLIST_PATH = ADMIN_SESSION_MODE ? '/worklist' : '/admin/batches';
+const PORTAL_ACCESS_PATH = '/api/admin/onboarding?limit=100';
+const QUESTIONNAIRE_URL = ADMIN_SESSION_MODE
+  ? 'https://setup.thetrademarkhelpline.com/existing.html'
+  : CURRENT_LOCATION.origin + CURRENT_LOCATION.pathname.replace(/[^/]*$/, 'existing.html');
+const staffHeaders = (token, json = false) => ({
+  ...(json ? {'content-type':'application/json'} : {}),
+  ...(!ADMIN_SESSION_MODE ? {'x-admin-token':token} : {}),
+});
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -102,6 +238,28 @@ const outcomeLabel = value => ({
   not_applicable:'not applicable', partial_failure:'partly failed',
   provisioned:'provisioned', review_required:'review required',
 }[value] || String(value || 'unknown').replaceAll('_',' '));
+function portalActionMessage(data, fallback){
+  data = rec(data);
+  if (data.status === 'preparation_incomplete') {
+    return ({
+      failed:'Portal portfolio preparation failed. Review the recorded provisioning error before retrying.',
+      not_requested:'Portal portfolio preparation did not start. Retry Prepare access.',
+      partial:'Only part of the trademark portfolio was prepared. Review the portfolio evidence before retrying.',
+      prepared:'Applicant evidence does not match the trademark registry, so Portal access could not be prepared. Review the applicant and trademark evidence before retrying.',
+      skipped:'No eligible trademark portfolio was found. Check the applicant identifier and trademark applications before retrying.',
+    }[data.portfolioSeedStatus] ||
+      'Portal access preparation did not complete. Review the submission evidence before retrying.');
+  }
+  const detail = String(data.detail || '').trim();
+  if (detail && /[ .]/.test(detail)) return detail;
+  const message = String(data.message || '').trim();
+  if (message) return message;
+  const error = String(data.error || data.code || detail).trim();
+  if (error === 'onboarding_provisioning_plan_input_mismatch') {
+    return 'The approved submission no longer matches the current provisioning evidence. Reload the submission and review the CRM contact, applicant and latest form version before retrying.';
+  }
+  return fallback;
+}
 function applicationStatusText(data){
   data = rec(data);
   const crm = `CRM status: ${data.status || 'unknown'}${data.replayed ? ' (replayed)' : ''}` +
@@ -120,25 +278,212 @@ function applicationStatusText(data){
   }).join('; ');
 }
 
+let ACTIVE_TAB = ADMIN_SESSION_MODE ? 'ready' : 'submissions';
+let DATA = { submissions:[], worklist:{ batches:[], clients:[] },
+  portalAccess:{error:'',items:[],total:0} };
+let LAST_TOKEN = '';
+let ACCESS_APPROVAL_BUTTON = null;
+let ACCESS_APPROVAL_DIALOG_WIRED = false;
+
+const ACCESS_APPROVAL_REASONS = {
+  'client-request': {
+    label:'Client request verified',
+    reason:'Client request verified against the submitted onboarding details.',
+  },
+  'relationship-confirmed': {
+    label:'Existing relationship confirmed',
+    reason:'Existing client relationship and identity evidence reviewed.',
+  },
+  'access-reviewed': {
+    label:'Access level reviewed',
+    reason:'Requested Portal access level reviewed and approved.',
+  },
+  other:{label:'Other',reason:''},
+};
+
+const invitationUrl = seedToken => QUESTIONNAIRE_URL + '?seed=' +
+  encodeURIComponent(seedToken);
+const readyClients = () => recs(DATA.worklist.clients).filter(c => c.status === 'ready');
+const invitedClients = () => recs(DATA.worklist.clients).filter(c =>
+  c.status === 'sent' || c.status === 'opened');
+
+function setActiveTab(tab){
+  if (!['ready','invited','submissions','access'].includes(tab)) return;
+  ACTIVE_TAB = tab;
+  renderCurrent();
+}
+
+function renderCurrent(){
+  if (ADMIN_SESSION_MODE) {
+    const counts = {
+      ready:readyClients().length,
+      invited:invitedClients().length,
+      submissions:recs(DATA.submissions).length,
+      access:Number(DATA.portalAccess.total) || recs(DATA.portalAccess.items).length,
+    };
+    document.querySelectorAll('[data-tab]').forEach(button => {
+      const active = button.dataset.tab === ACTIVE_TAB;
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+      button.tabIndex = active ? 0 : -1;
+    });
+    document.querySelectorAll('[data-count]').forEach(node => {
+      node.textContent = String(counts[node.dataset.count] || 0);
+    });
+  }
+  if (ACTIVE_TAB === 'ready') return renderClients(readyClients(), 'ready');
+  if (ACTIVE_TAB === 'invited') return renderClients(invitedClients(), 'invited');
+  if (ACTIVE_TAB === 'access') return renderPortalAccess(DATA.portalAccess);
+  return render(DATA.submissions);
+}
+
+function renderPortalAccess(result){
+  result = rec(result);
+  if (result.error) {
+    $('#out').innerHTML = '<div class="err">Portal access records are temporarily unavailable.</div>';
+    return;
+  }
+  const rows = recs(result.items);
+  if (!rows.length) {
+    $('#out').innerHTML = '<div class="none">No Portal access records yet.</div>';
+    return;
+  }
+  $('#out').innerHTML = `
+    <div class="sum"><div><b>${Number(result.total) || rows.length}</b>
+      Portal access records${Number(result.total) > rows.length
+        ? ` · showing latest ${rows.length}` : ''}</div></div>
+    <div class="client-list">${rows.map(row => {
+      row = rec(row);
+      return `<div class="client">
+        <div><div class="t">${esc(row.display_name || 'Unnamed user')}</div>
+          <div class="m">${esc(row.account_name || 'No account')}</div></div>
+        <div class="m">${esc(outcomeLabel(row.onboarding_origin))} ·
+          ${esc(outcomeLabel(row.relationship_state))}</div>
+        <div><span class="tag ${row.provisioning_status === 'provisioned' ? 'ok' : ''}">${
+          esc(outcomeLabel(row.provisioning_status))}</span>
+          <div class="m">${esc(outcomeLabel(row.invite_email_status))} ·
+            ${Number(row.invite_email_attempt_count) || 0} attempt${
+              Number(row.invite_email_attempt_count) === 1 ? '' : 's'}</div></div>
+        <div class="client-actions"><a class="button-link" target="_top"
+          href="/admin/onboarding/${encodeURIComponent(row.id)}">Open</a></div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function renderClients(clients, kind){
+  const ready = kind === 'ready';
+  if (!clients.length) {
+    $('#out').innerHTML = `<div class="none">${ready
+      ? 'No accounts are ready to invite.'
+      : 'No invited accounts are waiting for a submission.'}</div>`;
+    return;
+  }
+  $('#out').innerHTML = `
+    <div class="sum"><div><b>${clients.length}</b>${ready
+      ? ' ready to send' : ' invited without a submission'}</div></div>
+    <div class="client-list">${clients.map(clientRow).join('')}</div>`;
+  document.querySelectorAll('[data-mark-invited]').forEach(button =>
+    button.onclick = () => markInvitedAndCopy(button));
+  document.querySelectorAll('[data-copy-invitation]').forEach(button =>
+    button.onclick = () => copyInvitation(button));
+}
+
+function clientRow(client){
+  client = rec(client);
+  const name = [client.first_name,client.last_name].filter(Boolean).join(' ');
+  const invited = client.status === 'sent' || client.status === 'opened';
+  return `<div class="client">
+    <div><div class="t">${esc(client.zoho_account || client.billing_name || 'Unnamed account')}</div>
+      <div class="m">${esc(name || 'No contact name')} · ${esc(client.email || 'No email')}</div></div>
+    <div class="m">${Number(client.marks) || 0} mark${Number(client.marks) === 1 ? '' : 's'} ·
+      ${Number(client.applicant_records) || 0} applicant record${
+        Number(client.applicant_records) === 1 ? '' : 's'}</div>
+    <div><span class="tag ${client.status === 'opened' ? 'ok' : invited ? 'brand' : ''}">${
+      client.status === 'ready' ? 'Ready to send' : client.status === 'opened' ? 'Opened' : 'Invited'
+    }</span>${invited ? `<div class="m">${date(client.opened_at || client.sent_at)}</div>` : ''}</div>
+    <div class="client-actions">${client.status === 'ready'
+      ? `<button class="ghost" data-mark-invited data-seed-token="${esc(client.seed_token)}">
+          Mark invited &amp; copy link</button>`
+      : `<button class="ghost" data-copy-invitation data-seed-token="${esc(client.seed_token)}">
+          Copy link again</button>`}</div>
+  </div>`;
+}
+
+async function writeInvitationLink(seedToken){
+  const url = invitationUrl(seedToken);
+  await navigator.clipboard.writeText(url);
+  return url;
+}
+
+async function markInvitedAndCopy(button){
+  button.disabled = true;
+  $('#page-status').textContent = 'Capturing assumptions and preparing the link…';
+  try{
+    const response = await fetch(PORTAL_API + '/seed-sent', {
+      method:'POST', headers:staffHeaders(LAST_TOKEN, true),
+      body:JSON.stringify({seed_token:button.dataset.seedToken}),
+    });
+    const data = await response.json();
+    if (!response.ok || data.error || !['sent','opened','submitted'].includes(data.status)) {
+      throw new Error(response.status === 401 ? 'Session expired.' :
+        'This account could not be marked invited. Try again.');
+    }
+    let copied = true;
+    try{ await writeInvitationLink(button.dataset.seedToken); }
+    catch(error){ copied = false; }
+    await load(LAST_TOKEN);
+    $('#page-status').textContent = copied
+      ? 'Account marked invited and copied to the clipboard.'
+      : `Account marked invited. Copy this link: ${invitationUrl(button.dataset.seedToken)}`;
+  }catch(error){
+    $('#page-status').textContent = error.message || 'The invitation could not be prepared.';
+    button.disabled = false;
+  }
+}
+
+async function copyInvitation(button){
+  button.disabled = true;
+  try{
+    await writeInvitationLink(button.dataset.seedToken);
+    $('#page-status').textContent = 'Invitation link copied to the clipboard.';
+  }catch(error){
+    $('#page-status').textContent = `Copy this link: ${invitationUrl(button.dataset.seedToken)}`;
+  }finally{ button.disabled = false; }
+}
+
 async function load(token){
   $('#out').innerHTML = '<div class="none">Loading…</div>';
-  let d;
+  LAST_TOKEN = token;
+  let submissions, worklist = { batches:[], clients:[] }, portalAccess = {items:[]};
   try{
-    const r = await fetch(PORTAL_API + '/admin/submissions?limit=250',
-      {headers:{'x-admin-token':token}});
-    d = await r.json();
-  }catch(e){ d = {error:'could not reach the API'}; }
+    const requests = [fetch(PORTAL_API + SUBMISSIONS_PATH + '?limit=250',
+      {headers:staffHeaders(token)})];
+    if (ADMIN_SESSION_MODE) requests.push(fetch(PORTAL_API + WORKLIST_PATH,
+      {headers:staffHeaders(token)}));
+    if (ADMIN_SESSION_MODE) requests.push(fetch(PORTAL_ACCESS_PATH,
+      {headers:staffHeaders(token)}).catch(() => ({
+        json:async () => ({error:'unavailable'}),
+      })));
+    const responses = await Promise.all(requests);
+    submissions = await responses[0].json();
+    if (responses[1]) worklist = await responses[1].json();
+    if (responses[2]) portalAccess = await responses[2].json();
+  }catch(e){ submissions = {error:'could not reach the API'}; }
 
-  if (d.error){
-    $('#out').innerHTML = `<div class="err">${d.error === 'unauthorised'
-      ? 'That token was not accepted.' : esc(d.error)}</div>`;
+  const error = submissions.error || worklist.error;
+  if (error){
+    $('#out').innerHTML = `<div class="err">${error === 'unauthorised'
+      ? 'That token was not accepted.' : esc(error)}</div>`;
     return;
   }
 
-  // Only past the gate once a token actually worked.
-  sessionStorage.setItem('tmh_admin_token', token);
+  // Only past the gate once the selected staff access mode actually worked.
+  if (!ADMIN_SESSION_MODE) sessionStorage.setItem('tmh_admin_token', token);
   $('#gate').style.display = 'none';
-  render(d.results || []);
+  if (ADMIN_SESSION_MODE) $('#tabs').style.display = 'flex';
+  DATA = { submissions:submissions.results || [], worklist,
+    portalAccess:{error:portalAccess.error || '', items:portalAccess.items || [],
+      total:portalAccess.total || 0} };
+  renderCurrent();
 }
 
 function render(rows){
@@ -166,6 +511,12 @@ function render(rows){
     b.onclick = () => approvePlan(b));
   document.querySelectorAll('[data-apply-plan]').forEach(b =>
     b.onclick = () => applyPlan(b));
+  document.querySelectorAll('[data-approve-access]').forEach(b =>
+    b.onclick = () => openPortalAccessApproval(b));
+  document.querySelectorAll('[data-prepare-access]').forEach(b =>
+    b.onclick = () => prepareAccess(b));
+  document.querySelectorAll('[data-send-invitation]').forEach(b =>
+    b.onclick = () => sendPreparedInvitation(b));
 
   /* Deliberately JSON rather than CSV. The CSV shaping lives in
      export_submissions.py; reimplementing it here would give two definitions of
@@ -197,6 +548,73 @@ function card(r){
   const decisions = recs(reconciliationResult.decisions);
   const applicationPlan = rec(r.application_plan);
   const applicationExecution = rec(r.application_execution);
+  const portalAccess = rec(r.portal_access);
+  const newCustomerPortalStatus = !compliance ? (() => {
+    if (portalAccess.status === 'active') return `<div class="action">
+      <span class="tag ok">Portal access active</span>
+      <span class="m">Verified public-registration account · ${date(portalAccess.completed_at)} ·
+        Submission review pending.</span>
+    </div>`;
+    if (portalAccess.status === 'not_found') return `<div class="action">
+      <span class="tag warn">Portal access not linked</span>
+      <span class="m">No exact verified public-registration account matches this submission.</span>
+    </div>`;
+    if (portalAccess.status === 'blocked') return `<div class="action">
+      <span class="tag warn">Portal access blocked</span>
+      <span class="m">${esc(outcomeLabel(portalAccess.reason))}.</span>
+    </div>`;
+    return `<div class="action">
+      <span class="tag warn">Portal access status unavailable</span>
+      <span class="m">${esc(portalAccess.error ||
+        'public_registration_access_status_unavailable')}</span>
+    </div>`;
+  })() : '';
+  const provisioningFailure = compliance && applicationExecution.status === 'applied' &&
+    applicationExecution.provisioning_error ? `<div class="action">
+      <span class="tag warn">Portal access status unavailable</span>
+      <span class="m">${esc(applicationExecution.provisioning_error)}</span>
+    </div>` : '';
+  const pendingPortalActions = applicationExecution.status === 'applied'
+    ? recs(applicationExecution.provisioning_results).filter(item =>
+      item.status === 'invite_email_not_recorded').map(item => {
+      const index = Number(item.submitted_person_index);
+      if (!Number.isInteger(index) || index < 0) return '';
+      const access = item.requested_portal_access === 'administrator'
+        ? 'Administrator' : 'User';
+      const accessApproval = rec(item.access_approval);
+      return `<div class="action">
+        <span class="m">Person ${index + 1} · ${access}</span>
+        <button class="ghost" data-prepare-access
+          data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}"
+          data-person-index="${index}">Prepare access</button>
+        <button class="ghost" data-send-invitation
+          data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}"
+          data-person-index="${index}" disabled>Send prepared invitation</button>
+        <span class="m" data-provisioning-status>${Object.keys(accessApproval).length
+          ? `Portal access approved by ${esc(accessApproval.approvedByActorRef)} · ${date(accessApproval.approvedAt)}`
+          : 'Preparation required.'}</span>
+      </div>`;
+    }).join('') : '';
+  const heldPortalActions = applicationExecution.status === 'applied'
+    ? recs(applicationExecution.provisioning_results).filter(item =>
+      item.status === 'held' && item.access_approval_available === true).map(item => {
+      const index = Number(item.submitted_person_index);
+      if (!Number.isInteger(index) || index < 0) return '';
+      const triggers = recs(item.hold_triggers).map(trigger =>
+        String(trigger.permission || '').replaceAll('_', ' ')).filter(Boolean);
+      const detail = triggers.length ? [...new Set(triggers)].join(', ') : 'permission hold';
+      return `<div class="action">
+        <span class="tag warn">Portal access held</span>
+        <span class="m">Person ${index + 1} · ${esc(detail)}</span>
+        ${ADMIN_ROLE === 'super_admin'
+          ? `<button class="ghost" data-approve-access
+              data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}"
+              data-person-index="${index}" data-hold-detail="Person ${index + 1} · ${esc(detail)}">
+              Approve Portal access</button>`
+          : '<span class="m">Super-admin approval required.</span>'}
+        <span class="m" data-access-approval-status></span>
+      </div>`;
+    }).join('') : '';
   const reviewHeld = decisions.some(item => item.decision === 'review_required' ||
     (item.decision === 'proposed_unassignment' && !item.relationshipProvenance));
   const marks = compliance ? recs(d.trademarks).length :
@@ -214,11 +632,14 @@ function card(r){
       ? `<span class="tag ok">Application plan approved</span>
          <span class="m">${esc(applicationPlan.primaryInvitee?.membershipRole || '')} ·
            ${date(applicationPlan.approvedAt)}</span>
-         <button class="ghost" data-apply-plan
-           data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}">
-           Apply to Zoho</button>
-         <span class="m" data-apply-status>${Object.keys(applicationExecution).length
-           ? esc(applicationStatusText(applicationExecution)) : ''}</span>`
+         ${applicationExecution.status === 'applied'
+           ? `<span class="tag ok">Saved to CRM</span>
+              <span class="m">${date(applicationExecution.completed_at)}</span>`
+           : `<button class="ghost" data-apply-plan
+                data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}">
+                Save approved changes to CRM</button>
+              <span class="m" data-apply-status>${Object.keys(applicationExecution).length
+                ? esc(applicationStatusText(applicationExecution)) : ''}</span>`}`
       : `<select data-plan-role aria-label="Portal membership role">
           <option value="">Select Portal role…</option>
           ${['owner','admin','billing','viewer','advisor'].map(role =>
@@ -228,7 +649,9 @@ function card(r){
            data-submission="${esc(r.submission_id)}" data-version="${esc(r.version)}"
            ${reviewHeld ? 'disabled' : ''}>Approve application plan</button>
          <span class="m" data-plan-status>${reviewHeld
-           ? 'Held: resolve every review-required decision first.' : ''}</span>`}
+           ? 'Held: a relationship or authority change requires senior review. ' +
+             'This Preview has no release action; retain the evidence and escalate ' +
+             'to the product owner.' : ''}</span>`}
     </div>` : '';
 
   return `<div class="s">
@@ -250,7 +673,11 @@ function card(r){
           version ${esc(r.version)} · ${esc(r.versions)} saved</code></div>
     </div>
     <div class="body">
+      ${newCustomerPortalStatus}
+      ${provisioningFailure}
       ${approval}
+      ${heldPortalActions}
+      ${pendingPortalActions}
       ${loa}
       ${decisions.length ? `<h3>Reconciliation</h3>
         <div class="m">Snapshot <code>${esc(reconciliation.snapshot_id)}</code> ·
@@ -330,9 +757,10 @@ function card(r){
 async function approvePlan(button){
   const status = button.parentElement.querySelector('[data-plan-status]');
   const membershipRole = button.parentElement.querySelector('[data-plan-role]').value;
-  const staffActorRef = prompt('Staff actor reference (for immutable approval evidence):',
-    sessionStorage.getItem('tmh_staff_actor_ref') || 'staff:');
-  if (!membershipRole || !staffActorRef) {
+  const staffActorRef = ADMIN_SESSION_MODE ? '' :
+    prompt('Staff actor reference (for immutable approval evidence):',
+      sessionStorage.getItem('tmh_staff_actor_ref') || 'staff:');
+  if (!membershipRole || (!ADMIN_SESSION_MODE && !staffActorRef)) {
     status.textContent = 'Select a role and enter a staff actor reference.';
     return;
   }
@@ -340,15 +768,17 @@ async function approvePlan(button){
   status.textContent = 'Recording immutable plan…';
   try{
     const token = sessionStorage.getItem('tmh_admin_token') || '';
-    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+    const path = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
       `/versions/${encodeURIComponent(button.dataset.version)}/application-plan`;
-    const response = await fetch(PORTAL_API + path, {method:'POST', headers:{
-      'content-type':'application/json', 'x-admin-token':token,
-    }, body:JSON.stringify({membership_role:membershipRole,
-      staff_actor_ref:staffActorRef.trim()})});
+    const response = await fetch(PORTAL_API + path, {method:'POST',
+      headers:staffHeaders(token, true), body:JSON.stringify({
+        membership_role:membershipRole,
+        ...(!ADMIN_SESSION_MODE ? {staff_actor_ref:staffActorRef.trim()} : {}),
+      })});
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || 'Approval failed.');
-    sessionStorage.setItem('tmh_staff_actor_ref', staffActorRef.trim());
+    if (!ADMIN_SESSION_MODE)
+      sessionStorage.setItem('tmh_staff_actor_ref', staffActorRef.trim());
     await load(token);
   }catch(error){
     status.textContent = error.message || 'Approval failed.';
@@ -359,18 +789,181 @@ async function approvePlan(button){
 async function applyPlan(button){
   const status = button.parentElement.querySelector('[data-apply-status]');
   button.disabled = true;
-  status.textContent = 'Applying immutable plan…';
+  status.textContent = 'Saving approved changes to CRM…';
   try{
     const token = sessionStorage.getItem('tmh_admin_token') || '';
-    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+    const path = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
       `/versions/${encodeURIComponent(button.dataset.version)}/application-plan/apply-zoho`;
     const response = await fetch(PORTAL_API + path, {method:'POST',
-      headers:{'x-admin-token':token}});
+      headers:staffHeaders(token)});
     const data = await response.json();
     if (!data.status) throw new Error(data.error || 'Application failed.');
-    status.textContent = applicationStatusText(data);
+    if (ADMIN_SESSION_MODE) await load(token);
+    else status.textContent = applicationStatusText(data);
   }catch(error){ status.textContent = error.message || 'Application failed.'; }
   finally{ button.disabled = false; }
+}
+
+function selectedAccessApprovalReason(){
+  const selected = $('[data-access-approval-reason]').value;
+  if (selected === 'other') {
+    const other = $('[data-access-approval-other]').value.trim();
+    return other.length >= 3 ? `Other: ${other}` : '';
+  }
+  return ACCESS_APPROVAL_REASONS[selected]?.reason || '';
+}
+
+function syncAccessApprovalDialog(){
+  const selected = $('[data-access-approval-reason]').value;
+  const other = $('[data-access-approval-other]');
+  $('[data-access-approval-other-field]').hidden = selected !== 'other';
+  $('[data-access-approval-other-count]').textContent = `${other.value.length}/493`;
+  $('[data-access-approval-submit]').disabled = !selectedAccessApprovalReason();
+  $('[data-access-approval-error]').textContent = '';
+}
+
+function closeAccessApprovalDialog(){
+  const button = ACCESS_APPROVAL_BUTTON;
+  const dialog = $('#access-approval-dialog');
+  if (dialog.open) dialog.close();
+  ACCESS_APPROVAL_BUTTON = null;
+  if (button?.isConnected && button.focus) button.focus();
+}
+
+function wireAccessApprovalDialog(){
+  if (ACCESS_APPROVAL_DIALOG_WIRED) return;
+  const dialog = $('#access-approval-dialog');
+  const reason = $('[data-access-approval-reason]');
+  const other = $('[data-access-approval-other]');
+  reason.onchange = () => {
+    syncAccessApprovalDialog();
+    if (reason.value === 'other') other.focus();
+  };
+  other.oninput = syncAccessApprovalDialog;
+  document.querySelectorAll('[data-access-approval-cancel]').forEach(button => {
+    button.onclick = closeAccessApprovalDialog;
+  });
+  $('[data-access-approval-submit]').onclick = submitAccessApproval;
+  dialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    closeAccessApprovalDialog();
+  });
+  ACCESS_APPROVAL_DIALOG_WIRED = true;
+}
+
+function openPortalAccessApproval(button){
+  wireAccessApprovalDialog();
+  ACCESS_APPROVAL_BUTTON = button;
+  $('[data-access-approval-reason]').value = '';
+  $('[data-access-approval-other]').value = '';
+  $('[data-access-approval-hold]').textContent = button.dataset.holdDetail || 'Permission hold';
+  syncAccessApprovalDialog();
+  $('#access-approval-dialog').showModal();
+  $('[data-access-approval-reason]').focus();
+}
+
+async function submitAccessApproval(){
+  const reason = selectedAccessApprovalReason();
+  const submit = $('[data-access-approval-submit]');
+  const cancel = document.querySelectorAll('[data-access-approval-cancel]');
+  const select = $('[data-access-approval-reason]');
+  const other = $('[data-access-approval-other]');
+  const error = $('[data-access-approval-error]');
+  if (!reason || !ACCESS_APPROVAL_BUTTON) {
+    error.textContent = 'Select an approval reason.';
+    return;
+  }
+  submit.disabled = true;
+  cancel.forEach(button => { button.disabled = true; });
+  select.disabled = true;
+  other.disabled = true;
+  submit.textContent = 'Recording…';
+  const result = await approvePortalAccess(ACCESS_APPROVAL_BUTTON, reason);
+  if (result.ok) {
+    closeAccessApprovalDialog();
+  } else {
+    syncAccessApprovalDialog();
+    error.textContent = result.message;
+  }
+  submit.textContent = 'Approve Portal access';
+  cancel.forEach(button => { button.disabled = false; });
+  select.disabled = false;
+  other.disabled = false;
+}
+
+async function approvePortalAccess(button, reason){
+  const status = button.parentElement.querySelector('[data-access-approval-status]');
+  if (!reason || reason.trim().length < 3) {
+    return {ok:false,message:'Select or enter an approval reason.'};
+  }
+  button.disabled = true;
+  status.textContent = 'Recording Portal access approval…';
+  try{
+    const token = sessionStorage.getItem('tmh_admin_token') || '';
+    const path = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/provisioning-plan/` +
+      `${encodeURIComponent(button.dataset.personIndex)}/approve-access`;
+    const response = await fetch(PORTAL_API + path, {method:'POST',
+      headers:staffHeaders(token, true), body:JSON.stringify({reason:reason.trim()})});
+    const data = await response.json();
+    if (!response.ok || data.error || data.code) {
+      throw new Error(portalActionMessage(data, 'Portal access approval failed.'));
+    }
+    status.textContent = 'Approval recorded. Preparing Portal access…';
+    const preparePath = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/provisioning-plan/` +
+      `${encodeURIComponent(button.dataset.personIndex)}/prepare`;
+    const prepareResponse = await fetch(PORTAL_API + preparePath, {method:'POST',
+      headers:staffHeaders(token)});
+    const preparation = await prepareResponse.json();
+    if (!prepareResponse.ok || preparation.status !== 'preparation_ready') {
+      throw new Error(portalActionMessage(preparation,
+        'Portal access approval was recorded, but preparation did not complete. Retry approval.'));
+    }
+    await load(token);
+    return {ok:true};
+  }catch(error){
+    const message = error.message || 'Portal access approval failed.';
+    status.textContent = message;
+    button.disabled = false;
+    return {ok:false,message};
+  }
+}
+
+async function prepareAccess(button){
+  return executePortalPlan(button, 'prepare');
+}
+
+async function sendPreparedInvitation(button){
+  return executePortalPlan(button, 'execute');
+}
+
+async function executePortalPlan(button, action){
+  const status = button.parentElement.querySelector('[data-provisioning-status]');
+  button.disabled = true;
+  status.textContent = action === 'prepare' ? 'Preparing access…' : 'Sending invitation…';
+  try{
+    const token = sessionStorage.getItem('tmh_admin_token') || '';
+    const path = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
+      `/versions/${encodeURIComponent(button.dataset.version)}/provisioning-plan/` +
+      `${encodeURIComponent(button.dataset.personIndex)}/${action}`;
+    const response = await fetch(PORTAL_API + path, {method:'POST',
+      headers:staffHeaders(token)});
+    const data = await response.json();
+    if (!response.ok || !data.status || data.error ||
+        (action === 'prepare' && data.status !== 'preparation_ready')) {
+      throw new Error(portalActionMessage(data, 'Portal action failed.'));
+    }
+    status.textContent = outcomeLabel(data.status);
+    if (action === 'prepare' && data.status === 'preparation_ready') {
+      const send = button.parentElement.querySelector('[data-send-invitation]');
+      if (send) send.disabled = false;
+    }
+  }catch(error){
+    status.textContent = error.message || 'Portal action failed.';
+  }finally{
+    button.disabled = false;
+  }
 }
 
 async function downloadLoa(button){
@@ -379,10 +972,10 @@ async function downloadLoa(button){
   status.textContent = 'Generating…';
   try{
     const token = sessionStorage.getItem('tmh_admin_token') || '';
-    const path = `/admin/submissions/${encodeURIComponent(button.dataset.submission)}` +
+    const path = `${SUBMISSIONS_PATH}/${encodeURIComponent(button.dataset.submission)}` +
       `/versions/${encodeURIComponent(button.dataset.version)}/loa`;
     const response = await fetch(PORTAL_API + path,
-      {headers:{'x-admin-token':token}});
+      {headers:staffHeaders(token)});
     const blob = await response.blob();
     if (!response.ok || blob.type !== 'application/pdf' || !blob.size)
       throw new Error(response.status === 401 ? 'Session expired.' : 'Draft LOA unavailable.');
@@ -398,13 +991,31 @@ async function downloadLoa(button){
   finally{ button.disabled = false; }
 }
 
-$('#go').onclick = () => load($('#tok').value.trim());
-$('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
+if (!ADMIN_SESSION_MODE) {
+  $('#go').onclick = () => load($('#tok').value.trim());
+  $('#tok').onkeydown = e => { if (e.key === 'Enter') load($('#tok').value.trim()); };
+} else {
+  $('#gate').style.display = 'none';
+  document.querySelectorAll('[data-tab]').forEach(button => {
+    button.onclick = () => setActiveTab(button.dataset.tab);
+    button.onkeydown = event => {
+      if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const order = ['ready','invited','submissions','access'];
+      const current = order.indexOf(ACTIVE_TAB);
+      const offset = event.key === 'ArrowRight' ? 1 : -1;
+      const next = order[(current + offset + order.length) % order.length];
+      setActiveTab(next);
+      document.querySelector(`[data-tab="${next}"]`)?.focus();
+    };
+  });
+  load('');
+}
 
-window.BUILD = 'build TMH-128';
+window.BUILD = 'build 22 Sep 20:38';
 if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
 
-const saved = sessionStorage.getItem('tmh_admin_token');
+const saved = !ADMIN_SESSION_MODE && sessionStorage.getItem('tmh_admin_token');
 if (saved) load(saved);
 </script>
 </body>
