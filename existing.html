@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tmh-build" content="build 22 Sep 20:38">
 <title>Confirm your trademark details — The Trademark Helpline</title>
 <style>
   :root{
@@ -188,14 +189,27 @@
       color:var(--muted);font-size:12px;margin-bottom:4px}
   }
 </style>
+<link rel="stylesheet" href="./assets/onboarding-shell.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Confirm your trademark details</h1>
-    <span class="sub">The Trademark Helpline</span>
-    <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
-  </header>
+<a class="skip-link" href="#onboarding-main">Skip to the form</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+    <div class="site-header__contact" aria-label="Contact The Trademark Helpline">
+      <a href="tel:+441618335400">0161 833 5400</a>
+      <a href="mailto:enquiries@thetrademarkhelpline.com">Email us</a>
+    </div>
+  </div>
+</header>
+<main class="wrap" id="onboarding-main">
+  <div class="form-heading">
+    <div>
+      <p class="eyebrow">Existing client setup</p>
+      <h1>Confirm your trademark details</h1>
+    </div>
+    <span class="sub">Secure online questionnaire</span>
+  </div>
   <div class="steps" id="progress"></div>
   <div id="stage"></div>
   <div class="nav">
@@ -205,7 +219,21 @@
       <button class="primary" id="next">Continue</button>
     </div>
   </div>
-</div>
+</main>
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div>
+      <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+      <p>© 2026, The Trademark Helpline. All Rights Reserved.</p>
+    </div>
+    <div class="site-footer__details">
+      <p>Craven Business Centre, 4-5 Craven Court,<br>
+        Craven Road, Altrincham, Greater Manchester,<br>WA14 5DY, UK</p>
+      <p><a href="tel:+441618335400">0161 833 5400</a><br>
+        <a href="mailto:enquiries@thetrademarkhelpline.com">enquiries@thetrademarkhelpline.com</a></p>
+    </div>
+  </div>
+</footer>
 
 <script>
 /* Compliance, Contacts & Authority Questionnaire — existing clients.
@@ -221,6 +249,16 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+
+function labelVisibleControls(){
+  document.querySelectorAll('input, select, textarea').forEach(control => {
+    if (control.getAttribute('aria-label') || control.getAttribute('aria-labelledby') ||
+        control.getAttribute('title') || control.closest('label')) return;
+    const label = control.parentElement?.querySelector(':scope > label');
+    const name = label?.textContent?.trim() || control.getAttribute('placeholder');
+    if (name) control.setAttribute('aria-label', name);
+  });
+}
 
 /* What the register said at the moment of the claim. A confirmation is only
    evidence if you can show what was confirmed. */
@@ -527,6 +565,7 @@ function viewPrimary(){
       potential conflicts and disputes? Being the main contact does not by itself carry
       authority to instruct work — we ask about that separately.</p>
     ${personFields(p, 0)}
+    ${reportRecipientError()}
   </div>`;
 }
 
@@ -544,6 +583,7 @@ function viewOthers(){
         <div class="bd">${personFields(p, i)}</div></div>`;
     }).join('') : '<div class="empty">No one else added. Most clients add at least one.</div>'}
     <button class="ghost" id="addPerson" style="margin-bottom:20px">Add another person</button>
+    ${reportRecipientError()}
 
     <h3>Billing</h3>
     <p class="hint">Who should receive invoices? Receiving invoices is not the same as being
@@ -570,6 +610,14 @@ function viewOthers(){
       <input data-b="poDetail" style="width:100%;font:inherit;padding:9px 10px;
         border:1px solid var(--line);border-radius:8px" value="${esc(S.billing.poDetail)}"></div>` : ''}
   </div>`;
+}
+
+function reportRecipientError(){
+  return S.people.some(person => person.reports) ? '' :
+    `<div class="err" role="alert" aria-live="polite">
+      <strong>At least one person must receive monitoring reports.</strong>
+      If the main contact should not receive them, add another person and choose them as a recipient.
+    </div>`;
 }
 
 /* ── 5. authority ──────────────────────────────────────────────────── */
@@ -641,14 +689,15 @@ function viewSignatory(){
       into our agreement on behalf of ${esc(S.owner.name)}? This person signs the terms and
       the standing Letter of Authority.</p>
 
-    <div class="rows">
-      ${named.map(p=>`<div class="row pick" data-sig="${p.key}"
+    <div class="rows" role="radiogroup" aria-label="Authorised signatory">
+      ${named.map(p=>`<label class="row pick signatory-choice"
           ${S.signatory.contact_key===p.key?'style="background:var(--brand-tint)"':''}>
-        <input type="radio" ${S.signatory.contact_key===p.key?'checked':''} style="pointer-events:none">
+        <input type="radio" name="signatory" value="${p.key}" data-sig="${p.key}"
+          ${S.signatory.contact_key===p.key?'checked':''}>
         <div class="main"><div class="t">${esc(p.first)} ${esc(p.last)}</div>
           <div class="m">${esc(p.job||'')}${p.job?' · ':''}${esc(p.email)} ·
             ${esc(ROLE_LABEL[p.role]||'')}</div></div>
-      </div>`).join('')}
+      </label>`).join('')}
     </div>
     ${!named.length ? '<div class="empty">Add someone with a name and an email first.</div>' : ''}
 
@@ -885,6 +934,7 @@ function render(){
   $('#next').textContent = id==='review' ? 'Submit' : 'Continue';
   $('#next').disabled = !valid(id);
   wire(id);
+  labelVisibleControls();
 }
 
 function wire(id){
@@ -925,7 +975,6 @@ function wire(id){
   $$('[data-reports]').forEach(b => b.onclick = () => {
     const [i,v] = b.dataset.reports.split(':');
     S.people[+i].reports = v === '1';
-    if (!S.people.some(x => x.reports)) S.people[+i].reports = true;
     render(); });
   $$('[data-drop]').forEach(b => b.onclick = () => {
     S.people.splice(+b.dataset.drop,1); render(); });
@@ -953,7 +1002,8 @@ function wire(id){
   $$('[data-scope]').forEach(s => s.onchange = () => {
     S.people[+s.dataset.scope].scope = s.value; });
 
-  $$('[data-sig]').forEach(r => r.onclick = () => {
+  $$('[data-sig]').forEach(r => r.onchange = () => {
+    if (!r.checked) return;
     S.signatory.contact_key = r.dataset.sig; render(); });
   if ($('#sigBasis')) $('#sigBasis').onchange = e => {
     S.signatory.basis = e.target.value; render(); };
@@ -986,7 +1036,7 @@ $('#next').onclick = async () => {
     const sig = S.people.find(p => p.key === S.signatory.contact_key) || {};
     $('#stage').innerHTML = `<div class="card done-head">
         <h2>Thank you — that is everything we needed</h2>
-        <p class="lead">Reference <strong>${esc((S.submissionId||'').slice(0,8).toUpperCase())}</strong>.
+        <p class="lead">Submission reference <strong>${esc((S.submissionId||'').slice(0,8).toUpperCase())}</strong>.
           We are checking what you have told us.</p>
       </div>
       <div class="card"><h2>What happens next</h2>
@@ -999,7 +1049,7 @@ $('#next').onclick = async () => {
             for anyone you have named.</li>
         </ol>
         <p class="hint" style="margin-bottom:0">Questions? Call us on
-          <a href="tel:+441618335400">+44 161 833 5400</a> quoting your reference.</p>
+          <a href="tel:+441618335400">+44 161 833 5400</a> and give us your submission reference.</p>
       </div>`;
     $('#next').style.display='none'; $('#back').style.display='none';
     $('#progress').style.display='none';
@@ -1010,8 +1060,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build TMH-129';
-if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
+window.BUILD = 'build 22 Sep 20:38';
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
    plainly marked as ours to confirm — it is what we believe, not what they have
