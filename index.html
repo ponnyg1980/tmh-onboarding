@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tmh-build" content="build 22 Sep 20:38">
 <title>Set up your portfolio — The Trademark Helpline</title>
 <style>
   :root{
@@ -142,14 +143,27 @@
     h2{font-size:16px}
   }
 </style>
+<link rel="stylesheet" href="./assets/onboarding-shell.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Set up your portfolio</h1>
-    <span class="sub">The Trademark Helpline</span>
-    <span class="sub" id="build" style="margin-left:auto;opacity:.55"></span>
-  </header>
+<a class="skip-link" href="#onboarding-main">Skip to the form</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+    <div class="site-header__contact" aria-label="Contact The Trademark Helpline">
+      <a href="tel:+441618335400">0161 833 5400</a>
+      <a href="mailto:enquiries@thetrademarkhelpline.com">Email us</a>
+    </div>
+  </div>
+</header>
+<main class="wrap" id="onboarding-main">
+  <div class="form-heading">
+    <div>
+      <p class="eyebrow">New customer setup</p>
+      <h1>Set up your portfolio</h1>
+    </div>
+    <span class="sub">Secure online setup</span>
+  </div>
   <div class="steps" id="progress"></div>
   <div id="stage"></div>
   <div class="nav">
@@ -159,7 +173,21 @@
       <button class="primary" id="next">Continue</button>
     </div>
   </div>
-</div>
+</main>
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div>
+      <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+      <p>© 2026, The Trademark Helpline. All Rights Reserved.</p>
+    </div>
+    <div class="site-footer__details">
+      <p>Craven Business Centre, 4-5 Craven Court,<br>
+        Craven Road, Altrincham, Greater Manchester,<br>WA14 5DY, UK</p>
+      <p><a href="tel:+441618335400">0161 833 5400</a><br>
+        <a href="mailto:enquiries@thetrademarkhelpline.com">enquiries@thetrademarkhelpline.com</a></p>
+    </div>
+  </div>
+</footer>
 
 <script>
 const WATCH_TYPES = [
@@ -220,6 +248,16 @@ let at = 0;
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $  = s => document.querySelector(s);
+
+function labelVisibleControls(){
+  document.querySelectorAll('input, select, textarea').forEach(control => {
+    if (control.getAttribute('aria-label') || control.getAttribute('aria-labelledby') ||
+        control.getAttribute('title') || control.closest('label')) return;
+    const label = control.parentElement?.querySelector(':scope > label');
+    const name = label?.textContent?.trim() || control.getAttribute('placeholder');
+    if (name) control.setAttribute('aria-label', name);
+  });
+}
 
 const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
   'https://tmh-portal-git-dev-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
@@ -551,10 +589,10 @@ function viewSummary(){
 
   return `<div class="card done-head">
       <h2>Your details have been received</h2>
-      <p class="lead">Reference <strong>${esc(ref)}</strong> · ${when}.
-        Please keep a copy of this summary — print it or save it as a PDF.</p>
+      <p class="lead">Submission reference <strong>${esc(ref)}</strong> · ${when}.
+        Keep this reference if you need to contact us about your submission.</p>
       <button class="primary" id="continuePortalSetup">Continue to secure Portal access</button>
-      <button class="ghost" id="printSummary">Print or save as PDF</button>
+      <button class="ghost secondary-action" id="printSummary">Print or save a PDF copy</button>
     </div>
 
     <div class="card">
@@ -630,7 +668,8 @@ function viewSummary(){
         recipients. It does not by itself give anyone the right to make changes to a
         trademark. We will confirm the appropriate authority before acting.</p>
       <p class="hint" style="margin-bottom:0">Something not right? Call us on
-        <a href="tel:+441618335400">+44 161 833 5400</a> quoting <strong>${esc(ref)}</strong>.
+        <a href="tel:+441618335400">+44 161 833 5400</a> and give us submission reference
+        <strong>${esc(ref)}</strong>.
         Nothing here is fixed — you can add, remove or change any of it later.</p>
     </div>`;
 }
@@ -672,6 +711,7 @@ function render(){
   $('#next').textContent = id==='review' ? 'Create my portfolio' : 'Continue';
   $('#next').disabled = !valid(id);
   wire(id);
+  labelVisibleControls();
 }
 
 /* A search result list must survive adding something from it. Selecting an
@@ -1192,8 +1232,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build d1f21be2830d6c550c67b463d569289da70f1599';
-if (window.BUILD !== 'BUILD' + '_STAMP') $('#build').textContent = window.BUILD;
+window.BUILD = 'build 22 Sep 20:38';
 
 render();
 </script>
