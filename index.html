@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="tmh-build" content="build 22 Sep 20:38">
+<meta name="tmh-build" content="build 23 Sep 16:27">
 <title>Set up your portfolio — The Trademark Helpline</title>
 <style>
   :root{
@@ -260,7 +260,7 @@ function labelVisibleControls(){
 }
 
 const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
-  'https://tmh-portal-git-dev-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
+  'https://my.thetrademarkhelpline.com/api/onboarding-intake';
 const LOOKUP_API = PORTAL_API + '/lookups';
 
 /* What the registers said at the moment of the claim. Kept because a portfolio
@@ -1232,7 +1232,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 22 Sep 20:38';
+window.BUILD = 'build 23 Sep 16:27';
 
 render();
 </script>
