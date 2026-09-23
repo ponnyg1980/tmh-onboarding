@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="tmh-build" content="build 22 Sep 20:38">
+<meta name="tmh-build" content="build 23 Sep 16:27">
 <title>Confirm your trademark details — The Trademark Helpline</title>
 <style>
   :root{
@@ -242,7 +242,7 @@
    the right verification demanded. */
 
 const PORTAL_API = globalThis.TMH_PORTAL_API_BASE ||
-  'https://tmh-portal-git-dev-alexs-projects-5ddeff74.vercel.app/api/onboarding-intake';
+  'https://my.thetrademarkhelpline.com/api/onboarding-intake';
 const LOOKUP_API = PORTAL_API + '/lookups';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
@@ -1060,7 +1060,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 22 Sep 20:38';
+window.BUILD = 'build 23 Sep 16:27';
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
    plainly marked as ours to confirm — it is what we believe, not what they have
