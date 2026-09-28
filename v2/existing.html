@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="tmh-build" content="build 22 Sep 10:32">
+<meta name="tmh-build" content="build 28 Sep 14:50">
 <title>Confirm your trademark details — The Trademark Helpline</title>
 <style>
   :root{
@@ -341,10 +341,12 @@ const S = {
   ownerConfirmation: null,
   ownerCorrection: { name:'', address:'', company_number:'', note:'' },
   portfolioConfirmation: null, portfolioNote: '',
+  portfolio: { applicants:[], companies:[] },
   people: [],
   billing: { mode:'primary', name:'', email:'', phone:'', po:false, poDetail:'' },
   signatory: { contact_key:'', basis:'', confirmed:false },
 };
+let tmSearch = null, coSearch = null;
 
 function blankPerson(primary){
   return { key: 'p' + Math.random().toString(36).slice(2,9),
@@ -505,6 +507,41 @@ function viewPortfolio(){
     </table>
     </div>
 
+    <h3>Requested additions</h3>
+    <p class="hint">Search the registers for anything else to add. These are saved as
+      pending claims for our team to review; they do not change your current portfolio
+      or give anyone authority.</p>
+    <div class="searchbar">
+      <select id="tmMode" aria-label="Trademark search type">
+        <option value="trademark" ${tmSearch?.mode==='applicant'?'':'selected'}>Trademark name</option>
+        <option value="applicant" ${tmSearch?.mode==='applicant'?'selected':''}>Applicant name</option>
+      </select>
+      <input id="tmQ" placeholder="Trademark or applicant name" autocomplete="off">
+      <button id="tmGo">Search trademarks</button>
+    </div>
+    <div id="tmResults">${renderTmResults()}</div>
+    ${S.portfolio.applicants.map((a,i)=>`<div class="group" data-added-app="${esc(a.ipo)}">
+      <div class="head"><div><div class="t">${esc(a.name)}</div>
+        <div class="m">Applicant ${esc(a.ipo)} · ${a.marks.filter(m=>m.include).length}
+          of ${a.marks.length} selected</div></div>
+        <button class="ghost" data-drop-app="${i}">Remove</button></div>
+      <div class="rows">${a.marks.map((m,j)=>`<label class="row">
+        <input type="checkbox" data-extra-mark="${i}:${j}" ${m.include?'checked':''}>
+        <span class="main"><span class="t">${esc(m.mark_text||m.application_number)}</span>
+          <span class="m">${esc(m.application_number)} · ${esc(m.status||'')}</span></span>
+      </label>`).join('')}</div></div>`).join('')}
+
+    <div class="searchbar" style="margin-top:14px">
+      <input id="coQ" placeholder="Company name or number" autocomplete="off">
+      <button id="coGo">Search companies</button>
+    </div>
+    <div id="coResults">${renderCoResults()}</div>
+    ${S.portfolio.companies.map((c,i)=>`<div class="row" data-added-co="${esc(c.company_number)}">
+      <div class="main"><div class="t">${esc(c.company_name)}</div>
+        <div class="m">${esc(c.company_number)}${c.company_status?' · '+esc(c.company_status):''}</div></div>
+      <div class="act"><button class="ghost" data-drop-co="${i}">Remove</button></div>
+    </div>`).join('')}
+
     <h3>Does this portfolio look correct?</h3>
     <div class="choice">
       ${yn('confirmed','Yes, that is all of it','')}
@@ -520,6 +557,48 @@ function viewPortfolio(){
         placeholder="e.g. we also own BRANDNAME, applied for last year">
     </div>` : ''}
   </div>`;
+}
+
+function renderTmResults(){
+  if (!tmSearch) return '';
+  if (tmSearch.error) return `<div class="err">${esc(tmSearch.error)}</div>`;
+  const rows = tmSearch.results || [];
+  if (!rows.length) return '<div class="none">Nothing found. Try a different spelling.</div>';
+  return `<div class="rows">${rows.map(item=>{
+    const applicant = tmSearch.mode === 'applicant' ? item : (item.applicants||[])[0] || {};
+    const ipo = applicant.ipo_identifier;
+    const added = S.records.some(r=>String(r.ipo_identifier)===String(ipo)) ||
+      S.portfolio.applicants.some(a=>String(a.ipo)===String(ipo));
+    return `<div class="row pick" data-pick-app="${esc(ipo||'')}">
+      <div class="main"><div class="t">${esc(item.mark_text||applicant.name||item.name)}</div>
+        <div class="m">${esc(item.application_number||('Applicant '+ipo))}</div></div>
+      <div class="act"><button class="ghost" ${added?'disabled':''}>${added?'Added':'Select'}</button></div>
+    </div>`;}).join('')}</div>`;
+}
+
+function renderCoResults(){
+  if (!coSearch) return '';
+  if (coSearch.error) return `<div class="err">${esc(coSearch.error)}</div>`;
+  const rows = coSearch.results || [];
+  if (!rows.length) return '<div class="none">Nothing found. Try a different spelling.</div>';
+  return `<div class="rows">${rows.map(c=>{
+    const added = S.portfolio.companies.some(x=>x.company_number===c.company_number);
+    return `<div class="row pick" data-pick-co="${esc(c.company_number)}">
+      <div class="main"><div class="t">${esc(c.company_name)}</div>
+        <div class="m">${esc(c.company_number)}${c.company_status?' · '+esc(c.company_status):''}</div></div>
+      <div class="act"><button class="ghost" ${added?'disabled':''}>${added?'Added':'Add'}</button></div>
+    </div>`;}).join('')}</div>`;
+}
+
+async function addApplicant(ipo){
+  if (!ipo || S.records.some(r=>String(r.ipo_identifier)===String(ipo)) ||
+      S.portfolio.applicants.some(a=>String(a.ipo)===String(ipo))) return;
+  const d = await api(`/api/applicant/${encodeURIComponent(ipo)}`);
+  if (d.error || !d.applicant) throw new Error(d.error || 'Applicant could not be loaded');
+  if (S.records.some(r=>String(r.ipo_identifier)===String(d.applicant.ipo_identifier)) ||
+      S.portfolio.applicants.some(a=>String(a.ipo)===String(d.applicant.ipo_identifier))) return;
+  S.portfolio.applicants.push({ ipo:d.applicant.ipo_identifier, name:d.applicant.name,
+    marks:(d.trademarks||[]).map(m=>({...m,include:true})) });
 }
 
 /* ── people ────────────────────────────────────────────────────────── */
@@ -761,6 +840,9 @@ function viewReview(){
                            not_ours:'Something listed is not theirs — we will check',
                            help:'Help requested'}[S.portfolioConfirmation] || '—')}
       ${line('Trademarks', S.trademarks.length)}
+      ${line('Requested additions', S.portfolio.applicants.reduce((n,a)=>
+        n+a.marks.filter(m=>m.include).length,0)+' trademarks · '+
+        S.portfolio.companies.length+' companies')}
       ${line('People named', named.length)}
       ${line('Signatory', sig ? esc(sig.first + ' ' + sig.last) : 'not chosen')}
     </div>
@@ -866,6 +948,13 @@ function snapshot(){
     trademarks: S.trademarks.map(m => ({ application_number:m.application_number,
       mark_text:m.mark_text, status:m.status, tmh_representative:m.tmh_representative,
       jointly_owned:!!m.jointly_owned, applicants:m.applicants || [] })),
+    portfolio: {
+      applicants:S.portfolio.applicants.map(a=>({ ipo_identifier:a.ipo, name:a.name,
+        basis:'owned', trademarks:a.marks.filter(m=>m.include).map(m=>m.application_number),
+        excluded:a.marks.filter(m=>!m.include).map(m=>m.application_number) })),
+      companies:S.portfolio.companies.map(c=>({ company_number:c.company_number,
+        company_name:c.company_name, basis:'owned' })),
+    },
     people: named, billing: S.billing, signatory: S.signatory,
     authority_grants: grants, review_tasks: tasks,
     lookup_evidence: EVIDENCE,
@@ -964,6 +1053,55 @@ function wire(id){
   $$('[data-pc]').forEach(b => b.onclick = () => {
     S.portfolioConfirmation = b.dataset.pc; render(); });
   if ($('#pfNote')) $('#pfNote').oninput = e => { S.portfolioNote = e.target.value; };
+  if ($('#tmGo')){
+    const go = async () => {
+      const q = $('#tmQ').value.trim(); if (q.length<2) return;
+      $('#tmResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
+      try{
+        const mode = $('#tmMode').value;
+        const d = await api(`/api/search/${mode}?q=${encodeURIComponent(q)}`);
+        tmSearch = { mode, results:d.results||[], error:d.error||'' };
+      }catch(e){ tmSearch = { mode:$('#tmMode').value, results:[], error:'Search is unavailable. Please try again.' }; }
+      render();
+    };
+    $('#tmGo').onclick = go;
+    $('#tmQ').onkeydown = e => { if (e.key==='Enter') go(); };
+  }
+  $$('[data-pick-app]').forEach(row => row.onclick = async () => {
+    if (row.querySelector('button')?.disabled) return;
+    try { await addApplicant(row.dataset.pickApp); tmSearch = null; }
+    catch(e){ tmSearch = { mode:'trademark', results:[], error:'That applicant could not be loaded. Please try again.' }; }
+    render();
+  });
+  $$('[data-extra-mark]').forEach(box => box.onchange = () => {
+    const [i,j] = box.dataset.extraMark.split(':');
+    S.portfolio.applicants[+i].marks[+j].include = box.checked;
+    render();
+  });
+  $$('[data-drop-app]').forEach(b => b.onclick = () => {
+    S.portfolio.applicants.splice(+b.dataset.dropApp,1); render(); });
+  if ($('#coGo')){
+    const go = async () => {
+      const q = $('#coQ').value.trim(); if (q.length<2) return;
+      $('#coResults').innerHTML = '<div class="none"><span class="spin"></span> Searching…</div>';
+      try{
+        const d = await api(`/api/search/company?q=${encodeURIComponent(q)}`);
+        coSearch = { results:d.results||[], error:d.error||'' };
+      }catch(e){ coSearch = { results:[], error:'Search is unavailable. Please try again.' }; }
+      render();
+    };
+    $('#coGo').onclick = go;
+    $('#coQ').onkeydown = e => { if (e.key==='Enter') go(); };
+  }
+  $$('[data-pick-co]').forEach(row => row.onclick = () => {
+    if (row.querySelector('button')?.disabled) return;
+    const c = (coSearch?.results||[]).find(x=>x.company_number===row.dataset.pickCo);
+    if (c && !S.portfolio.companies.some(x=>x.company_number===c.company_number))
+      S.portfolio.companies.push(c);
+    coSearch = null; render();
+  });
+  $$('[data-drop-co]').forEach(b => b.onclick = () => {
+    S.portfolio.companies.splice(+b.dataset.dropCo,1); render(); });
 
   $$('[data-p]').forEach(el => el.oninput = el.onchange = () => {
     const [i,f] = el.dataset.p.split(':');
@@ -1060,7 +1198,7 @@ $('#next').onclick = async () => {
 };
 $('#back').onclick = () => { if (at) { at--; render(); } };
 
-window.BUILD = 'build 22 Sep 10:32';
+window.BUILD = 'build 28 Sep 14:50';
 
 /* A seeded client arrives knowing who they are. What we hold is pre-filled and
    plainly marked as ours to confirm — it is what we believe, not what they have
