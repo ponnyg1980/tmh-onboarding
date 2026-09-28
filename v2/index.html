@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="tmh-build" content="build 22 Sep 10:32">
+<meta name="tmh-build" content="build 28 Sep 14:50">
 <title>Set up your portfolio — The Trademark Helpline</title>
 <style>
   :root{
@@ -225,6 +225,8 @@ const S = {
   router: { trademarks:null, companies:null, watchlist:null },
   applicants: [],      // {ipo,name,kind,postcode,marks:[{...,include}],companies:[]}
   companies: [],       // {company_number,company_name,...,include}
+  billingCompanyNumber: null,
+  billingConfirmed: false,
   users: [ blankUser(true) ],
   watch: { applicants:[], companies:[] },   // each carries .relationship
 };
@@ -334,15 +336,20 @@ function saveState(kind){
   }
 }
 function snapshot(){
+  const selectedCompanies = S.companies.filter(c=>c.include);
+  const billingCompanyNumber = selectedCompanies.length === 1
+    ? selectedCompanies[0].company_number : S.billingCompanyNumber;
   return {
     router: S.router,
+    ...(selectedCompanies.length && billingCompanyNumber
+      ? {billing_company_number:billingCompanyNumber} : {}),
     portfolio: {
       applicants: S.applicants.map(a => ({
         ipo_identifier:a.ipo, name:a.name, basis:a.basis || 'owned',
         trademarks: a.marks.filter(m=>m.include).map(m=>m.application_number),
         excluded:   a.marks.filter(m=>!m.include).map(m=>m.application_number),
       })),
-      companies: S.companies.filter(c=>c.include)
+      companies: selectedCompanies
                   .map(c=>({company_number:c.company_number, company_name:c.company_name,
                             basis:c.basis || 'owned', via:c.via})),
     },
@@ -538,7 +545,12 @@ function viewUsers(){
 /* ── step 6: review ────────────────────────────────────────────────── */
 function viewReview(){
   const marks = S.applicants.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
-  const cos   = S.companies.filter(c=>c.include).length;
+  const selectedCompanies = S.companies.filter(c=>c.include);
+  const cos   = selectedCompanies.length;
+  if (cos > 1 && !selectedCompanies.some(c=>c.company_number===S.billingCompanyNumber)) {
+    S.billingCompanyNumber = selectedCompanies[0].company_number;
+    S.billingConfirmed = false;
+  }
   const wm    = S.watch.applicants.reduce((n,a)=>n+a.marks.filter(m=>m.include).length,0);
   const wc    = S.watch.companies.filter(c=>c.include).length;
   const line = (l,v) => `<div class="row"><div class="main"><div class="t">${l}</div></div>
@@ -553,6 +565,18 @@ function viewReview(){
       ${S.router.watchlist ? line('Companies on your watchlist', wc) : ''}
       ${line('People with access', S.users.length)}
     </div>
+    ${cos > 1 ? `<div class="ask">
+      <label for="billingCompany"><strong>Billing company</strong></label>
+      <p class="hint">The first company is proposed as the main company for billing.
+        Please confirm it or choose another from your portfolio.</p>
+      <select id="billingCompany">
+        ${selectedCompanies.map(c=>`<option value="${esc(c.company_number)}" ${
+          c.company_number===S.billingCompanyNumber?'selected':''}>${
+          esc(c.company_name)} (${esc(c.company_number)})</option>`).join('')}
+      </select>
+      <label><input type="checkbox" id="billingConfirmed" ${S.billingConfirmed?'checked':''}>
+        I confirm this is the billing company for my submitted portfolio.</label>
+    </div>` : ''}
     <h3>Excluded</h3>
     <p class="hint">Anything you unticked stays out of your portfolio. You can add it later.</p>
   </div>`;
@@ -740,6 +764,11 @@ function viewWatch(){
 
 function valid(id){
   if (id==='router') return Object.values(S.router).every(v=>v!==null);
+  if (id==='review'){
+    const selected = S.companies.filter(c=>c.include);
+    return selected.length < 2 || (S.billingConfirmed &&
+      selected.some(c=>c.company_number===S.billingCompanyNumber));
+  }
   if (id==='users'){
     const p = S.users[0];
     const recipients = S.users.filter(u=>u.reports);
@@ -752,6 +781,18 @@ function valid(id){
 
 /* ── events ────────────────────────────────────────────────────────── */
 function wire(id){
+  if (id==='review' && $('#billingCompany')){
+    $('#billingCompany').onchange = e => {
+      S.billingCompanyNumber = e.target.value;
+      S.billingConfirmed = false;
+      $('#billingConfirmed').checked = false;
+      $('#next').disabled = true;
+    };
+    $('#billingConfirmed').onchange = e => {
+      S.billingConfirmed = e.target.checked;
+      $('#next').disabled = !valid('review');
+    };
+  }
   if (id==='router'){
     $('#stage').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
       S.router[b.dataset.k] = b.dataset.v === '1';
@@ -1198,6 +1239,7 @@ function wireCoResults(W){
 /* ── navigation ────────────────────────────────────────────────────── */
 $('#next').onclick = async () => {
   const st = steps();
+  if (!valid(st[at].id)) return;
   const ok = await save();
 
   /* Never tell someone their portfolio is set up when nothing was stored.
@@ -1232,7 +1274,7 @@ $('#back').onclick = () => { if (at) { at--; render(); } };
 
 /* Stamped at publish. GitHub Pages caches for 10 minutes, so "I still see the
    old behaviour" is usually a stale copy — this says which one is loaded. */
-window.BUILD = 'build 22 Sep 10:32';
+window.BUILD = 'build 28 Sep 14:50';
 
 render();
 </script>
