@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tmh-build" content="build 29 Sep 16:44">
+<title>Create your free Temmy Portal account — The Trademark Helpline</title>
+<link rel="stylesheet" href="./assets/onboarding-shell.css">
+<style>
+  :root{--err:#A11;--err-tint:#FDECEC}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+  .signup-wrap{max-width:520px;margin:0 auto;padding-top:40px}
+  .signup-wrap>.eyebrow{margin-bottom:12px}
+  .signup-card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:28px}
+  h1{color:var(--tmh-heading);font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+  .lead{color:var(--muted);margin:0 0 20px;font-size:14px}
+  label{display:block;font-size:13px;font-weight:600;margin:14px 0 5px}
+  .hint{font-weight:400;color:var(--muted)}
+  input[type=text],input[type=email],input[type=tel],input[type=password]{
+    width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  input[aria-invalid=true]{border-color:var(--err)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row label{margin-top:14px}
+  .pw{position:relative}
+  .pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;
+             color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:4px 6px}
+  .fielderr{color:var(--err);font-size:12.5px;margin-top:4px;min-height:0}
+  .terms{display:flex;gap:10px;align-items:flex-start;margin:18px 0 4px;font-size:13.5px}
+  .terms input{margin-top:3px;width:17px;height:17px;accent-color:var(--brand);flex:none}
+  .terms a{color:var(--brand)}
+  .signup-wrap .primary{width:100%;margin-top:20px;background:var(--brand);color:#fff;border:0;border-radius:9px;
+           padding:13px;font:inherit;font-weight:700;cursor:pointer;transition:background .15s ease}
+  .signup-wrap .primary:hover{background:#c9134a}
+  .signup-wrap .primary:disabled{opacity:.5;cursor:default}
+  .link{background:none;border:0;color:var(--brand);font:inherit;font-size:13.5px;cursor:pointer;
+        padding:0;text-decoration:underline}
+  .alert{border-radius:9px;padding:11px 13px;font-size:14px;margin-bottom:14px}
+  .alert.err{background:var(--err-tint);color:var(--err)}
+  .alert.ok{background:var(--ok-tint);color:var(--ok)}
+  .code{font-size:26px;letter-spacing:10px;text-align:center;font-variant-numeric:tabular-nums}
+  .foot{display:flex;justify-content:space-between;gap:10px;margin-top:16px;font-size:13.5px;color:var(--muted)}
+  .small{font-size:12.5px;color:var(--muted);margin-top:18px}
+  .mock{background:#FFF4D6;color:#7A5A00;border-radius:8px;padding:8px 11px;font-size:12.5px;margin-bottom:14px}
+  @media(max-width:420px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#signup-main">Skip to the form</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+    <div class="site-header__contact" aria-label="Contact The Trademark Helpline">
+      <a href="tel:+441618335400">0161 833 5400</a>
+      <a href="mailto:enquiries@thetrademarkhelpline.com">Email us</a>
+    </div>
+  </div>
+</header>
+<main class="wrap signup-wrap" id="signup-main">
+  <p class="eyebrow">Temmy Portal</p>
+  <div id="mockNote" class="mock">Prototype — not connected. Use code <strong>123456</strong>.</div>
+  <div class="signup-card" id="stage" aria-live="polite"></div>
+  <p class="small">Your data is handled under our <a id="privacyFoot" href="#">Privacy Policy</a>.</p>
+</main>
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div>
+      <img src="./assets/tmh-logo-white.svg" alt="The Trademark Helpline" width="225" height="60">
+      <p>© 2026, The Trademark Helpline. All Rights Reserved.</p>
+    </div>
+    <div class="site-footer__details">
+      <p>Craven Business Centre, 4-5 Craven Court,<br>
+        Craven Road, Altrincham, Greater Manchester,<br>WA14 5DY, UK</p>
+      <p><a href="tel:+441618335400">0161 833 5400</a><br>
+        <a href="mailto:enquiries@thetrademarkhelpline.com">enquiries@thetrademarkhelpline.com</a></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   Simple Temmy Portal sign-up — unlinked, provider-free review prototype.
+
+   Three steps: details + password  →  6-digit email code  →  Portal opens.
+   Everything else (trademarks, companies, users) is done inside the Portal.
+
+   This page never creates an account, sends email, or contacts a provider.
+   Mobile is collected for contact only; it is not verified.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const CONFIG = {
+  TERMS_URL: '#',                 // set once the Portal Terms of Service are published
+  PRIVACY_URL: '#',
+  TERMS_VERSION: 'portal-tos-v0.3-draft',
+  PRIVACY_VERSION: 'portal-privacy-v0.3-draft',
+  LOGIN_URL: '#',
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S = { step:'details', f:{first:'',last:'',email:'',mobile:'',org:''}, terms:false,
+            regId:null, busy:false, alert:null, errs:{}, attemptsLeft:null };
+
+/* ── Review-only mock ───────────────────────────────────────────────────── */
+async function call(path, body){
+  return mock(path, body);
+}
+async function mock(path, body){
+  await new Promise(r => setTimeout(r, 400));
+  if (path === '/start')
+    return /exists@/.test(body.email) ? {status:'existing_account'}
+         : {status:'code_sent', registration_id:'mock-' + Date.now()};
+  if (path === '/verify')
+    return body.code === '123456' ? {status:'verified', portal_url:'#portal'}
+         : {status:'invalid_code', attempts_left: 4};
+  if (path === '/resend') return {status:'code_sent'};
+}
+
+/* ── validation ─────────────────────────────────────────────────────────── */
+function validate(){
+  const e = {}, f = S.f;
+  if (!f.first.trim()) e.first = 'Please enter your first name';
+  if (!f.last.trim()) e.last = 'Please enter your last name';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) e.email = 'Please enter a valid email address';
+  if (f.mobile.replace(/[^\d]/g,'').length < 10) e.mobile = 'Please enter a mobile number';
+  if (!f.org.trim()) e.org = 'Please enter your business or trading name';
+  const pw = $('#pw') ? $('#pw').value : '';
+  if (pw.length < 10) e.pw = 'Use at least 10 characters';
+  if (!S.terms) e.terms = 'Please accept the Terms and Privacy Policy to continue';
+  return e;
+}
+
+/* ── views ──────────────────────────────────────────────────────────────── */
+const alertHtml = () => S.alert ? `<div class="alert ${S.alert.kind}" role="alert">${S.alert.html}</div>` : '';
+const err = k => S.errs[k] ? `<div class="fielderr" id="e-${k}">${esc(S.errs[k])}</div>` : '';
+const inv = k => S.errs[k] ? 'aria-invalid="true" aria-describedby="e-'+k+'"' : '';
+
+function viewDetails(){
+  const f = S.f;
+  return `<h1>Create your free Portal account</h1>
+    <p class="lead">See your trademarks in one place. It takes a minute — you can add your
+      trademarks and companies once you're in.</p>
+    ${alertHtml()}
+    <form id="form" novalidate>
+      <div class="row">
+        <div><label for="first">First name</label>
+          <input id="first" type="text" autocomplete="given-name" value="${esc(f.first)}" ${inv('first')}>${err('first')}</div>
+        <div><label for="last">Last name</label>
+          <input id="last" type="text" autocomplete="family-name" value="${esc(f.last)}" ${inv('last')}>${err('last')}</div>
+      </div>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" value="${esc(f.email)}" ${inv('email')}>${err('email')}
+      <label for="mobile">Mobile <span class="hint">— so we can reach you</span></label>
+      <input id="mobile" type="tel" autocomplete="tel" value="${esc(f.mobile)}" ${inv('mobile')}>${err('mobile')}
+      <label for="org">Business or trading name <span class="hint">— or your own name</span></label>
+      <input id="org" type="text" autocomplete="organization" value="${esc(f.org)}" ${inv('org')}>${err('org')}
+      <label for="pw">Create a password <span class="hint">— at least 10 characters</span></label>
+      <div class="pw"><input id="pw" type="password" autocomplete="new-password" ${inv('pw')}>
+        <button type="button" id="showpw" aria-label="Show password">Show</button></div>${err('pw')}
+      <div class="terms">
+        <input type="checkbox" id="terms" ${S.terms?'checked':''} ${inv('terms')}>
+        <label for="terms" style="margin:0;font-weight:400">I am 18 or over and accept the
+          <a href="${CONFIG.TERMS_URL}" target="_blank" rel="noopener">Portal Terms of Service</a> and
+          <a href="${CONFIG.PRIVACY_URL}" target="_blank" rel="noopener">Privacy Policy</a>.</label>
+      </div>${err('terms')}
+      <button class="primary" type="submit" ${S.busy?'disabled':''}>${S.busy?'Creating your account…':'Create account'}</button>
+    </form>
+    <div class="foot"><span>Already have an account?</span><a class="link" href="${CONFIG.LOGIN_URL}">Log in</a></div>`;
+}
+
+function viewCode(){
+  return `<h1>Check your email</h1>
+    <p class="lead">We've sent a 6-digit code to <strong>${esc(S.f.email)}</strong>.
+      It expires in 15 minutes.</p>
+    ${alertHtml()}
+    <form id="form" novalidate>
+      <label for="code">Your code</label>
+      <input id="code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code"
+             maxlength="6" pattern="[0-9]{6}" ${inv('code')} ${S.busy?'disabled':''}>${err('code')}
+      <button class="primary" type="submit" ${S.busy?'disabled':''}>${S.busy?'Checking…':'Verify and open my Portal'}</button>
+    </form>
+    <div class="foot">
+      <button class="link" id="resend" type="button" ${S.busy?'disabled':''}>Send a new code</button>
+      <button class="link" id="change" type="button" ${S.busy?'disabled':''}>Use a different email</button>
+    </div>
+    <p class="small">Not arrived? Check your spam folder, or call us on
+      <a href="tel:+441618335400">0161 833 5400</a>.</p>`;
+}
+
+function viewDone(url){
+  return `<h1>You're in</h1>
+    <p class="lead">Your free Portal account is ready. Start by adding your trademarks and companies —
+      we'll check each one against the official register.</p>
+    <a class="primary" style="display:block;text-align:center;text-decoration:none" href="${esc(url)}">Open my Portal</a>`;
+}
+
+/* ── render + wiring ────────────────────────────────────────────────────── */
+function render(){
+  $('#stage').innerHTML = S.step === 'details' ? viewDetails() : S.step === 'code' ? viewCode() : viewDone(S.portalUrl);
+  wire();
+}
+function wire(){
+  const form = $('#form');
+  if (S.step === 'details'){
+    ['first','last','email','mobile','org'].forEach(k => $('#'+k).oninput = e => { S.f[k] = e.target.value; });
+    $('#terms').onchange = e => { S.terms = e.target.checked; };
+    $('#showpw').onclick = () => { const p=$('#pw'); const show=p.type==='password';
+      p.type = show?'text':'password'; $('#showpw').textContent = show?'Hide':'Show'; };
+    form.onsubmit = submitDetails;
+  }
+  if (S.step === 'code'){
+    $('#code').oninput = e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,6); };
+    $('#resend').onclick = resend;
+    $('#change').onclick = () => { S.step='details'; S.alert=null; S.errs={}; render(); };
+    form.onsubmit = submitCode;
+    $('#code').focus();
+  }
+}
+
+async function submitDetails(ev){
+  ev.preventDefault();
+  const pw = $('#pw').value;
+  S.errs = validate(); S.alert = null;
+  if (Object.keys(S.errs).length){
+    render(); $('#pw').value = pw;
+    const k=Object.keys(S.errs)[0]; const el=$('#'+k); if(el) el.focus();
+    return;
+  }
+  S.busy = true; render();
+  $('#pw').value = pw;
+  $('#form').querySelectorAll('input, button').forEach(el => { el.disabled = true; });
+  try{
+    const d = await call('/start', { first_name:S.f.first.trim(), last_name:S.f.last.trim(),
+      email:S.f.email.trim().toLowerCase(), mobile:S.f.mobile.trim(), organisation_name:S.f.org.trim(),
+      password: pw, terms_version:CONFIG.TERMS_VERSION, privacy_version:CONFIG.PRIVACY_VERSION });
+    if (d && d.status === 'code_sent'){ S.regId = d.registration_id; S.step = 'code'; }
+    else if (d && d.status === 'existing_account'){
+      S.alert = {kind:'err', html:`There's already a Portal account for this email. <a href="${CONFIG.LOGIN_URL}">Log in instead</a>.`}; }
+    else throw new Error((d && d.message) || 'not accepted');
+  }catch(e){
+    S.alert = {kind:'err', html:'We couldn\'t create your account just now. Nothing has been saved — please try again, or call us on <a href="tel:+441618335400">0161 833 5400</a>.'};
+  }
+  S.busy = false; render();
+  if (S.step === 'details') $('#pw').value = pw;
+}
+
+async function submitCode(ev){
+  ev.preventDefault();
+  const code = $('#code').value;
+  S.errs = {}; S.alert = null;
+  if (!/^\d{6}$/.test(code)){ S.errs.code = 'Enter the 6-digit code from the email'; render(); return; }
+  S.busy = true; render();
+  try{
+    const d = await call('/verify', { registration_id:S.regId, code });
+    if (d && d.status === 'verified'){ S.portalUrl = d.portal_url; S.step = 'done'; }
+    else if (d && d.status === 'invalid_code'){
+      S.errs.code = 'That code isn\'t right' + (d.attempts_left != null ? ` — ${d.attempts_left} attempt${d.attempts_left===1?'':'s'} left` : ''); }
+    else if (d && d.status === 'expired'){
+      S.alert = {kind:'err', html:'That code has expired. Send a new one below.'}; }
+    else throw new Error('unexpected');
+  }catch(e){
+    S.alert = {kind:'err', html:'We couldn\'t check your code just now. Please try again.'};
+  }
+  S.busy = false; render();
+}
+
+async function resend(){
+  S.alert = null; S.errs = {};
+  $('#resend').textContent = 'Sending…';
+  $('#stage').querySelectorAll('button, input').forEach(el => { el.disabled = true; });
+  try{
+    const d = await call('/resend', { registration_id:S.regId });
+    S.alert = d && d.status === 'code_sent'
+      ? {kind:'ok', html:'A new code is on its way.'}
+      : {kind:'err', html:'We couldn\'t send a new code. Please try again.'};
+  }catch(e){ S.alert = {kind:'err', html:'We couldn\'t send a new code. Please try again.'}; }
+  render();
+}
+
+$('#privacyFoot').href = CONFIG.PRIVACY_URL;
+render();
+</script>
+</body>
+</html>
